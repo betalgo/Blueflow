@@ -1,15 +1,15 @@
-    public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions opts)
-    {
+public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions opts)
+{
 {{~ for v in one_of_variants ~}}
-        if (value.{{ v.property_name }} is not null)
-        {
+if (value.{{ v.property_name }} is not null)
+{
 {{~ if v.use_write_string ~}}
-            writer.WriteStringValue(value.{{ v.property_name }});
+writer.WriteStringValue(value.{{ v.property_name }});
 {{~ else ~}}
-            JsonSerializer.Serialize(writer, value.{{ v.property_name }}, opts);
+JsonSerializer.Serialize(writer, value.{{ v.property_name }}, opts);
 {{~ end ~}}
-            return;
-        }
+return;
+}
 {{~ end ~}}
-        writer.WriteNullValue();
-    }
+writer.WriteNullValue();
+}

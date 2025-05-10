@@ -1,4 +1,3 @@
-using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 using Microsoft.OpenApi.Models;
 
 namespace Betalgo.Blueflow.OpenAPIToCode.Generators.CSharp.Services;
@@ -34,24 +33,6 @@ public class CSharpTypeMappingService : ITypeMappingService
         { "any", "object" },
         { "null", "object" }
     };
-
-    public string MapType(PropertyDefinition? openApiType, bool isNullable = false)
-    {
-        if (string.IsNullOrWhiteSpace(openApiType?.Type))
-            return "object";
-
-        if (openApiType.IsCollection)
-        {
-            return $"List<{MapType(openApiType.SubTypes.FirstOrDefault()!, openApiType.SubTypes.FirstOrDefault()?.IsNullable ?? false)}>";
-        }
-
-        var type = TypeMap.GetValueOrDefault(openApiType.Type.ToLowerInvariant(), openApiType.Type);
-        if (isNullable && type != "string" && type != "object" && type != "byte[]" && type != "Uri")
-            type += "?";
-
-
-        return type;
-    }
 
     public string MapType(OpenApiSchema schema)
     {

@@ -12,20 +12,9 @@ public class FileDefinition
     public string Namespace { get; set; }
 
     /// <summary>
-    ///     The list of class definitions to be included in the file.
-    /// </summary>
-    public List<ClassDefinition> Classes { get; set; } = new();
-
-    /// <summary>
-    ///     The list of enum definitions to be included in the file.
-    /// </summary>
-    public List<EnumDefinition> Enums { get; set; } = new();
-
-    /// <summary>
     ///     Additional usings required for the file.
     /// </summary>
     public List<string> Usings { get; set; } = new();
-
 
     public List<string> Content { get; set; }
 }

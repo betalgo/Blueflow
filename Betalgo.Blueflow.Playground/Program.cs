@@ -34,55 +34,7 @@ var openApiToCodeParser = new BlueFlowOpenApi(new CSharpCodeGenerator(new CSharp
     }
 });
 openApiToCodeParser.Start();
-//var a = new CSharpCodeGenerator(new CSharpCodeGeneratorConfiguration()
-//{
-//    ClassNameSuffix = "Model"
-//});
-//var engine = new BlueFlowOpenApiEngine(a, new BlueFlowOpenApiEngineConfiguration()
-//{
-//    OpenApiDocumentationPath = openApiFile,
-//    ProjectName = "TestAPI",
-//    GenerateNestedClasses = true,
-//    OutputDirectory = outputDir
-//});
-//var templatePath = Path.Combine("Generators", "CSharp", "DefaultTemplates", "oneof_template.sbn");
-//var templateText = File.ReadAllText(templatePath);
 
-
-;
-//   
-
-//    await CreateSolutionAndProject(outputDir, "TestAPI");
-
-//    // --- Add x-blueflow-id GUIDs to OpenAPI ---
-//    var openApiWithGuids = Path.Combine(outputDir, "openapi-with-blueflow-ids.yaml");
-//    //openApiToCodeParser.GenerateOpenApiWithBlueflowIds(openApiFile, openApiWithGuids);
-//    Console.WriteLine($"\n[OpenApiToCodeParser] OpenAPI file with x-blueflow-id created: {openApiWithGuids}");
-
-//    await openApiToCodeParser.GenerateFilesAsync(openApiFile, outputDir, "TestAPI");
-//    Console.WriteLine("\n[OpenApiToCodeParser] Custom code generation completed.");
-
-//    // List generated files
-//    var files = Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories);
-//    Console.WriteLine($"\nGenerated {files.Length} file(s):");
-//    foreach (var file in files)
-//    {
-//        Console.WriteLine($"  - {Path.GetRelativePath(outputDir, file)}");
-//    }
-
-//    // Create solution and project for the generated code
-//    await CreateSolutionAndProject(outputDir, "TestAPI");
-//}
-//catch (Exception ex)
-//{
-//    Console.WriteLine($"Error: {ex.Message}");
-//    if (ex.InnerException != null)
-//    {
-//        Console.WriteLine($"Inner error: {ex.InnerException.Message}");
-//    }
-
-//    Console.WriteLine(ex.StackTrace);
-//}
 
 Console.WriteLine("\nPress any key to exit...");
 Console.ReadKey();
@@ -107,8 +59,6 @@ static async Task CreateSolutionAndProject(string outputDir, string projectNames
 static void CleanupOutputDirectory(string outputDir)
 {
     Console.WriteLine("Cleaning up existing files in output directory...");
-
-    // Delete all .cs files in the output directory and its subdirectories
     var existingFiles = Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories);
     foreach (var file in existingFiles)
     {
@@ -122,23 +72,6 @@ static void CleanupOutputDirectory(string outputDir)
             Console.WriteLine($"  Warning: Could not delete {Path.GetRelativePath(outputDir, file)}: {ex.Message}");
         }
     }
-
-    // Delete any existing solution/project files
-    //var solutionFiles = Directory.GetFiles(outputDir, "*.sln", SearchOption.TopDirectoryOnly);
-    //var projectFiles = Directory.GetFiles(outputDir, "*.csproj", SearchOption.TopDirectoryOnly);
-
-    //foreach (var file in solutionFiles.Concat(projectFiles))
-    //{
-    //    try
-    //    {
-    //        File.Delete(file);
-    //        Console.WriteLine($"  Deleted: {Path.GetRelativePath(outputDir, file)}");
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        Console.WriteLine($"  Warning: Could not delete {Path.GetRelativePath(outputDir, file)}: {ex.Message}");
-    //    }
-    //}
 
     Console.WriteLine("Cleanup completed.");
 }

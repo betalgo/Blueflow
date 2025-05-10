@@ -517,6 +517,14 @@ public class CSharpCodeGenerator : ICodeGenerator
     }
 }
 
+public enum PolyType
+{
+    None,
+    OneOf,
+    AllOf,
+    AnyOf
+}
+
 public interface ITemplate
 {
 }

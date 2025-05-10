@@ -1,6 +1,5 @@
 using Betalgo.Blueflow.OpenAPIToCode.Generators;
 using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
-using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Writers;
@@ -10,14 +9,9 @@ namespace Betalgo.Blueflow.OpenAPIToCode;
 
 public class BlueFlowOpenApiEngine
 {
-    //private readonly Dictionary<Guid, OpenApiSchema> _definitionsSchema = new();
-    private static int count = 0;
-
-    private static Dictionary<Guid, string> _blueflowIdNameDictionary = new();
-    private static bool _blueflowIdNameDictionaryLoaded = false;
     private readonly ICodeGenerator _codeGenerator;
     private readonly BlueFlowOpenApiEngineConfiguration _configuration;
-    public readonly OpenApiDocument _openApiDocument;
+    private readonly OpenApiDocument _openApiDocument;
 
     public BlueFlowOpenApiEngine(ICodeGenerator codeGenerator, BlueFlowOpenApiEngineConfiguration configuration)
     {
@@ -297,155 +291,5 @@ public class BlueFlowOpenApiEngine
         {
             schema.Type = "object";
         }
-    }
-
-    /// <summary>
-    ///     Returns a dictionary mapping x-blueflow-id GUIDs to their schema/property/enum names from the OpenAPI file.
-    /// </summary>
-    public Dictionary<string, string> GetBlueflowIdDictionary(string openApiFilePath)
-    {
-        var result = new Dictionary<string, string>();
-        using var stream = File.OpenRead(openApiFilePath);
-        var openApiDocument = new OpenApiStreamReader().Read(stream, out var diagnostic);
-
-        // Root document
-        if (openApiDocument.Extensions != null && openApiDocument.Extensions.TryGetValue("x-blueflow-id", out var rootIdExt))
-        {
-            if (rootIdExt is OpenApiString rootId)
-                result[rootId.Value] = "root";
-        }
-
-        // Schemas
-        if (openApiDocument.Components?.Schemas != null)
-        {
-            foreach (var (key, schema) in openApiDocument.Components.Schemas)
-            {
-                if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-id", out var ext) && ext is OpenApiString id)
-                    result[id.Value] = key;
-                // Properties
-                if (schema.Properties != null)
-                {
-                    foreach (var propKvp in schema.Properties)
-                    {
-                        var prop = propKvp.Value;
-                        if (prop.Extensions != null && prop.Extensions.TryGetValue("x-blueflow-id", out var propExt) && propExt is OpenApiString propId)
-                            result[propId.Value] = $"{key}.{propKvp.Key}";
-                    }
-                }
-            }
-        }
-
-        // Parameters
-        if (openApiDocument.Paths != null)
-        {
-            foreach (var pathItem in openApiDocument.Paths)
-            {
-                foreach (var operation in pathItem.Value.Operations.Values)
-                {
-                    if (operation.Parameters == null) continue;
-                    foreach (var parameter in operation.Parameters)
-                    {
-                        if (parameter.Schema != null && parameter.Schema.Extensions != null && parameter.Schema.Extensions.TryGetValue("x-blueflow-id", out var paramExt) && paramExt is OpenApiString paramId)
-                        {
-                            result[paramId.Value] = $"parameter:{parameter.Name}";
-                        }
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    ///     Loads the BlueflowId-Name dictionary from the OpenAPI file (in memory only).
-    /// </summary>
-    public void LoadBlueflowIdNameDictionary(string openApiFilePath)
-    {
-        if (_blueflowIdNameDictionaryLoaded) return;
-        var dict = GetBlueflowIdDictionary(openApiFilePath).Where(kvp => Guid.TryParse(kvp.Key, out _)).ToDictionary(kvp => Guid.Parse(kvp.Key), kvp => kvp.Value);
-        _blueflowIdNameDictionary = dict;
-        _blueflowIdNameDictionaryLoaded = true;
-    }
-
-    /// <summary>
-    ///     Updates the name for a given BlueflowId in the dictionary (in memory only).
-    /// </summary>
-    public void UpdateBlueflowIdName(Guid id, string newName)
-    {
-        _blueflowIdNameDictionary[id] = newName;
-    }
-
-    /// <summary>
-    ///     Gets the canonical name for a given BlueflowId from the dictionary.
-    /// </summary>
-    public string GetNameByBlueflowId(Guid id)
-    {
-        if (_blueflowIdNameDictionary.TryGetValue(id, out var name))
-            return name;
-        return string.Empty;
-    }
-
-    /// <summary>
-    ///     Gets an OpenApiSchema by its reference.
-    /// </summary>
-    private OpenApiSchema? GetSchemaByReference(OpenApiReference reference, OpenApiDocument? document = null)
-    {
-        if (string.IsNullOrEmpty(reference?.Id) || document?.Components?.Schemas == null)
-            return null;
-
-        // For schema references, extract the name from the reference path
-        if (reference.Type == ReferenceType.Schema)
-        {
-            var schemaName = reference.Id;
-            if (document.Components.Schemas.TryGetValue(schemaName, out var schema))
-                return schema;
-        }
-
-        return null;
-    }
-
-    // Refactor: Use GetNameByBlueflowId for all name assignments in code generation
-    // Example for ClassDefinition and PropertyDefinition:
-    // When creating ClassDefinition or PropertyDefinition, set Name = GetNameByBlueflowId(id)
-
-    /// <summary>
-    ///     Determines the TypeId for a property that references another type.
-    /// </summary>
-    private Guid? GetTypeIdForProperty(OpenApiSchema prop, string propertyName)
-    {
-        // Case 1: Direct reference to another schema
-        if (!string.IsNullOrEmpty(prop.Reference?.Id))
-        {
-            // Look for the reference in our dictionary by name
-            var entries = _blueflowIdNameDictionary.Where(kvp => kvp.Value == prop.Reference.Id).ToList();
-
-            if (entries.Any())
-            {
-                return entries.First().Key;
-            }
-        }
-        // Case 2: For array items with references
-        else if (prop.Type == "array" && prop.Items?.Reference != null && !string.IsNullOrEmpty(prop.Items.Reference.Id))
-        {
-            // Look for the items reference in our dictionary by name
-            var entries = _blueflowIdNameDictionary.Where(kvp => kvp.Value == prop.Items.Reference.Id).ToList();
-
-            if (entries.Any())
-            {
-                return entries.First().Key;
-            }
-        }
-        // Case 3: For enum types identified earlier
-        else if (prop.Enum != null && prop.Enum.Count > 0 && (prop.Type == "string" || prop.Type == null))
-        {
-            // For enums, use the enum's BlueflowId that was assigned earlier
-            if (prop.Extensions != null && prop.Extensions.TryGetValue("x-blueflow-id", out var enumExt) && enumExt is OpenApiString enumIdStr && Guid.TryParse(enumIdStr.Value, out var enumId))
-            {
-                return enumId;
-            }
-        }
-
-        return null;
     }
 }

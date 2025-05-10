@@ -1,0 +1,28 @@
+{{~ if summary ~}}
+///
+<summary>
+	{{ summary }}
+	///
+</summary>
+{{~ end ~}}
+{{ modifiers }} class {{ name }}{{ base_types }}
+{
+///
+<summary>
+	/// Initializes a new instance of the <see cref="{{ name }}" /> class.
+	///
+</summary>
+public {{ name }}()
+{
+}
+{{~ if constructor ~}}
+{{ constructor }}
+{{~ end ~}}
+{{~ for property in properties ~}}
+{{ property }}
+{{~ end ~}}
+
+{{~ for nested_class in nested_classes ~}}
+{{ nested_class }}
+{{~ end ~}}
+}

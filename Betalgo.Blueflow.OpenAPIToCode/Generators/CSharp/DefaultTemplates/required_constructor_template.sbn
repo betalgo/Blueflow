@@ -1,16 +1,20 @@
-/// <summary>
-/// Initializes a new instance of the <see cref="{{ name }}"/> class.
-/// </summary>
+///
+<summary>
+	/// Initializes a new instance of the <see cref="{{ name }}" /> class.
+	///
+</summary>
 {{~ for param in constructor_parameters ~}}
 {{~ if param.summary && param.summary != '' ~}}
-/// <param name="{{ param.name }}">
-{{ param.summary }}
-/// </param>
+///
+<param name="{{ param.name }}">
+	{{ param.summary }}
+	///
+</param>
 {{~ end ~}}
 {{~ end ~}}
 public {{ name }}({{~ for param in constructor_parameters ~}}{{ param.type }} {{ param.name }}{{ if for.last == false }}, {{ end }}{{~ end ~}})
 {
-    {{~ for assignment in assignments ~}}
-    {{ assignment }}
-    {{~ end ~}}
+{{~ for assignment in assignments ~}}
+{{ assignment }}
+{{~ end ~}}
 }

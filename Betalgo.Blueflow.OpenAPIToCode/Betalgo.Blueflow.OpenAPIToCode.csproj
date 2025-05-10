@@ -11,13 +11,8 @@
     <None Remove="Generators\CSharp\Class.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\anyof_converter_template.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\anyof_template.sbn" />
-    <None Remove="Generators\CSharp\DefaultTemplates\Constructor.sbn" />
-    <None Remove="Generators\CSharp\DefaultTemplates\File - Copy.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\OneofStruct.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\oneof_converter_template.sbn" />
-    <None Remove="Generators\CSharp\DefaultTemplates\Project.sbn" />
-    <None Remove="Generators\CSharp\DefaultTemplates\Solution.sbn" />
-    <None Remove="Generators\CSharp\DefaultTemplates\StringEnum.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\StringEnumJsonConverter.sbn" />
     <None Remove="Generators\CSharp\File.sbn" />
     <None Remove="Generators\CSharp\Property.sbn" />
@@ -28,9 +23,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\anyof_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\File - Copy.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\oneof_converter_read_object_template.sbn">
@@ -45,22 +37,22 @@
     <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\oneof_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\Class.sbn">
+    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\class_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\Constructor.sbn">
+    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\required_constructor_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\Project.sbn">
+    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\project_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\Property.sbn">
+    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\property_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\Solution.sbn">
+    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\solution_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\StringEnum.sbn">
+    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\enum_as_string_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
@@ -75,7 +67,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\File.sbn">
+    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\file_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

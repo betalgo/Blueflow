@@ -1,78 +1,87 @@
-/// <summary>
-/// Json converter for {{ name }} class
-/// </summary>
-private sealed class {{ name }}Converter : JsonConverter<{{ name }}>
-{
-    public override {{ name }} Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions opts)
-    {
-        // Optional discriminator support
-        {{~ if discriminator_property && discriminator_mapping ~}}
-        if (reader.TokenType == JsonTokenType.StartObject)
-        {
-            using (var doc = JsonDocument.ParseValue(ref reader))
-            {
-                var root = doc.RootElement;
-                if (root.TryGetProperty("{{ discriminator_property }}", out var discrimProp))
-                {
-                    var discrimValue = discrimProp.GetString();
-                    switch (discrimValue)
-                    {
-                        {{~ for pair in discriminator_mapping ~}}
-                        case "{{ pair.key }}":
-                            return new (root.Deserialize<{{ pair.value.cs_type }}>(opts)!);
-                        {{~ end ~}}
-                        default:
-                            throw new JsonException($"Unknown discriminator value: {discrimValue}");
-                    }
-                }
-            }
-            // If discriminator is not present, fall through to token-based logic
-            reader = new Utf8JsonReader(doc.RootElement.GetRawText().ToUtf8Bytes());
-        }
-        {{~ end ~}}
-        switch (reader.TokenType)
-        {
-{{~ for v in any_of_variants ~}}
-{{~ if v.json_token_type != "StartArray" ~}}
-            case JsonTokenType.{{ v.json_token_type }}:
-                return new ({{ if v.use_write_string }}reader.GetString()!{{ else }}JsonSerializer.Deserialize<{{ v.cs_type }}>(ref reader, opts)!{{ end }});
-{{~ end ~}}
-{{~ end ~}}
-            case JsonTokenType.StartArray:
-            {
-                var readerCopy = reader;
-                if (!readerCopy.Read())
-                    throw new JsonException();
-                switch (readerCopy.TokenType)
-                {
-{{~ for v in any_of_variants ~}}
-{{~ if v.json_token_type == "StartArray" && v.array_element_token_type != null ~}}
-                    case JsonTokenType.{{ v.array_element_token_type }}:
-                        return new (JsonSerializer.Deserialize<{{ v.cs_type }}>(ref reader, opts));
-{{~ end ~}}
-{{~ end ~}}
-                    default:
-                        throw new JsonException();
-                }
-            }
-            default:
-                throw new JsonException();
-        }
-    }
+///
+<summary>
+	/// Json converter for {{ name }} class
+	///
+</summary>
+private sealed class {{ name }}Converter : JsonConverter
+<{{ name }}>
+	{
+	public override {{ name }} Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions opts)
+	{
+	// Optional discriminator support
+	{{~ if discriminator_property && discriminator_mapping ~}}
+	if (reader.TokenType == JsonTokenType.StartObject)
+	{
+	using (var doc = JsonDocument.ParseValue(ref reader))
+	{
+	var root = doc.RootElement;
+	if (root.TryGetProperty("{{ discriminator_property }}", out var discrimProp))
+	{
+	var discrimValue = discrimProp.GetString();
+	switch (discrimValue)
+	{
+	{{~ for pair in discriminator_mapping ~}}
+	case "{{ pair.key }}":
+	return new (root.Deserialize
+	<{{ pair.value.cs_type }}>
+		(opts)!);
+		{{~ end ~}}
+		default:
+		throw new JsonException($"Unknown discriminator value: {discrimValue}");
+		}
+		}
+		}
+		// If discriminator is not present, fall through to token-based logic
+		reader = new Utf8JsonReader(doc.RootElement.GetRawText().ToUtf8Bytes());
+		}
+		{{~ end ~}}
+		switch (reader.TokenType)
+		{
+		{{~ for v in any_of_variants ~}}
+		{{~ if v.json_token_type != "StartArray" ~}}
+		case JsonTokenType.{{ v.json_token_type }}:
+		return new ({{ if v.use_write_string }}reader.GetString()!{{ else }}JsonSerializer.Deserialize
+		<{{ v.cs_type }}>
+			(ref reader, opts)!{{ end }});
+			{{~ end ~}}
+			{{~ end ~}}
+			case JsonTokenType.StartArray:
+			{
+			var readerCopy = reader;
+			if (!readerCopy.Read())
+			throw new JsonException();
+			switch (readerCopy.TokenType)
+			{
+			{{~ for v in any_of_variants ~}}
+			{{~ if v.json_token_type == "StartArray" && v.array_element_token_type != null ~}}
+			case JsonTokenType.{{ v.array_element_token_type }}:
+			return new (JsonSerializer.Deserialize
+			<{{ v.cs_type }}>
+				(ref reader, opts));
+				{{~ end ~}}
+				{{~ end ~}}
+				default:
+				throw new JsonException();
+				}
+				}
+				default:
+				throw new JsonException();
+				}
+				}
 
-    public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions opts)
-    {
-{{~ for v in any_of_variants ~}}
-        if (value.{{ v.property_name }} is not null)
-        {
-{{~ if v.use_write_string ~}}
-            writer.WriteStringValue(value.{{ v.property_name }});
-{{~ else ~}}
-            JsonSerializer.Serialize(writer, value.{{ v.property_name }}, opts);
-{{~ end ~}}
-            return;
-        }
-{{~ end ~}}
-        writer.WriteNullValue();
-    }
-}
+				public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions opts)
+				{
+				{{~ for v in any_of_variants ~}}
+				if (value.{{ v.property_name }} is not null)
+				{
+				{{~ if v.use_write_string ~}}
+				writer.WriteStringValue(value.{{ v.property_name }});
+				{{~ else ~}}
+				JsonSerializer.Serialize(writer, value.{{ v.property_name }}, opts);
+				{{~ end ~}}
+				return;
+				}
+				{{~ end ~}}
+				writer.WriteNullValue();
+				}
+				}

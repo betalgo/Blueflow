@@ -1,7 +1,9 @@
 {{~ if property.summary ~}}
-/// <summary>
-{{ property.summary }}
-/// </summary>
+///
+<summary>
+	{{ property.summary }}
+	///
+</summary>
 {{~ end ~}}
 {{~ if property.json_name ~}}
 [JsonPropertyName("{{ property.json_name }}")]

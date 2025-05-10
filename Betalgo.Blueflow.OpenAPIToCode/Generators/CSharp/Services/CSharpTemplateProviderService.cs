@@ -41,19 +41,19 @@ public class CSharpTemplateProviderService : ITemplateProviderService
     /// <inheritdoc />
     public string GetFileTemplate()
     {
-        return GetTemplateText("File");
+        return GetTemplateText("file_template");
     }
 
     /// <inheritdoc />
     public string GetPropertyTemplate()
     {
-        return GetTemplateText("Property");
+        return GetTemplateText("property_template");
     }
 
     /// <inheritdoc />
     public string GetClassTemplate()
     {
-        return GetTemplateText("Class");
+        return GetTemplateText("class_template");
     }
 
     /// <inheritdoc />
@@ -83,25 +83,25 @@ public class CSharpTemplateProviderService : ITemplateProviderService
     /// <inheritdoc />
     public string GetConstructorTemplate()
     {
-        return GetTemplateText("Constructor");
+        return GetTemplateText("required_constructor_template");
     }
 
     /// <inheritdoc />
     public string GetStringEnumTemplate()
     {
-        return GetTemplateText("StringEnum");
+        return GetTemplateText("enum_as_string_template");
     }
 
     /// <inheritdoc />
     public string GetSolutionTemplate()
     {
-        return GetTemplateText("Solution");
+        return GetTemplateText("solution_template");
     }
 
     /// <inheritdoc />
     public string GetProjectTemplate()
     {
-        return GetTemplateText("Project");
+        return GetTemplateText("project_template");
     }
 
     /// <inheritdoc />
