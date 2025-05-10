@@ -1,0 +1,16 @@
+{{~ if usings ~}}
+{{ for u in usings }}using {{ u }};
+{{ end }}
+{{~ end ~}}
+{{~ if ns ~}}
+namespace {{ ns }};
+
+{{~ end ~}}
+{{~ for enum in enums ~}}
+{{ enum }}
+
+{{~ end ~}}
+{{~ for class in classes ~}}
+{{ class }}
+
+{{~ end ~}}

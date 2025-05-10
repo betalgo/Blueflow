@@ -1,0 +1,180 @@
+openapi: 3.0.0
+info:
+  title: OpenAI API
+  description: The OpenAI REST API. Please see
+    https://platform.openai.com/docs/api-reference for more details.
+  version: 2.3.0
+  termsOfService: https://openai.com/policies/terms-of-use
+  contact:
+    name: OpenAI Support
+    url: https://help.openai.com/
+  license:
+    name: MIT
+    url: https://github.com/openai/openai-openapi/blob/master/LICENSE
+servers:
+  - url: https://api.openai.com/v1
+tags:
+  - name: Assistants
+    description: Build Assistants that can call models and use tools.
+  - name: Audio
+    description: Turn audio into text or text into audio.
+  - name: Chat
+    description:
+      Given a list of messages comprising a conversation, the model will
+      return a response.
+  - name: Completions
+    description: Given a prompt, the model will return one or more predicted
+      completions, and can also return the probabilities of alternative tokens
+      at each position.
+  - name: Embeddings
+    description: Get a vector representation of a given input that can be easily
+      consumed by machine learning models and algorithms.
+  - name: Fine-tuning
+    description: Manage fine-tuning jobs to tailor a model to your specific training data.
+  - name: Batch
+    description: Create large batches of API requests to run asynchronously.
+  - name: Files
+    description:
+      Files are used to upload documents that can be used with features
+      like Assistants and Fine-tuning.
+  - name: Uploads
+    description: Use Uploads to upload large files in multiple parts.
+  - name: Images
+    description: Given a prompt and/or an input image, the model will generate a new image.
+  - name: Models
+    description: List and describe the various models available in the API.
+  - name: Moderations
+    description: Given text and/or image inputs, classifies if those inputs are
+      potentially harmful.
+  - name: Audit Logs
+    description: List user actions and configuration changes within this organization.
+components:
+  schemas:
+    AdminApiKey:
+      type: object
+      properties:
+        object:
+          type: string
+          example: organization.admin_api_key
+        id:
+          type: string
+          example: key_abc
+        name:
+          type: string
+          example: Administration Key
+        redacted_value:
+          type: string
+          example: sk-admin...def
+        value:
+          type: string
+          example: sk-admin-1234abcd
+        created_at:
+          type: integer
+          format: int64
+          example: 1711471533
+        owner:
+          type: object
+          properties:
+            type:
+              type: string
+              example: service_account
+            id:
+              type: string
+              example: sa_456
+            name:
+              type: string
+              example: My Service Account
+            created_at:
+              type: integer
+              format: int64
+              example: 1711471533
+            role:
+              type: string
+              example: member
+    CreateModerationRequest:
+      type: object
+      properties:
+        input:
+          description: >
+            Input (or inputs) to classify. Can be a single string, an array of
+            strings, or
+
+            an array of multi-modal input objects similar to other models.
+          oneOf:
+            - type: string
+              description: A string of text to classify for moderation.
+              default: ""
+              example: I want to kill them.
+            - type: array
+              description: An array of strings to classify for moderation.
+              items:
+                type: string
+                default: ""
+                example: I want to kill them.
+            - type: array
+              description: An array of multi-modal inputs to the moderation model.
+              items:
+                x-oaiExpandable: true
+                oneOf:
+                  - type: object
+                    description: An object describing an image to classify.
+                    properties:
+                      type:
+                        description: Always `image_url`.
+                        type: string
+                        enum:
+                          - image_url
+                        x-stainless-const: true
+                      image_url:
+                        type: object
+                        description:
+                          Contains either an image URL or a data URL for a base64 encoded
+                          image.
+                        properties:
+                          url:
+                            type: string
+                            description: Either a URL of the image or the base64 encoded image data.
+                            format: uri
+                            example: https://example.com/image.jpg
+                        required:
+                          - url
+                    required:
+                      - type
+                      - image_url
+                  - type: object
+                    description: An object describing text to classify.
+                    properties:
+                      type:
+                        description: Always `text`.
+                        type: string
+                        enum:
+                          - text
+                        x-stainless-const: true
+                      text:
+                        description: A string of text to classify.
+                        type: string
+                        example: I want to kill them
+                    required:
+                      - type
+                      - text
+          x-oaiExpandable: true
+        model:
+          description: |
+            The content moderation model you would like to use. Learn more in
+            [the moderation guide](/docs/guides/moderation), and learn about
+            available models [here](/docs/models#moderation).
+          nullable: false
+          default: omni-moderation-latest
+          example: omni-moderation-2024-09-26
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                - omni-moderation-latest
+                - omni-moderation-2024-09-26
+                - text-moderation-latest
+                - text-moderation-stable
+          x-oaiTypeLabel: string
+      required:
+        - input
+    

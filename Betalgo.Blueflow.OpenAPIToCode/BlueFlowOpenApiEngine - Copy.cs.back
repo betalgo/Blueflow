@@ -1,0 +1,1265 @@
+//using Betalgo.Blueflow.OpenAPIToCode.Generators;
+//using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
+//using Microsoft.OpenApi.Any;
+//using Microsoft.OpenApi.Models;
+//using Microsoft.OpenApi.Readers;
+//using Microsoft.OpenApi.Interfaces;
+//using SharpYaml.Tokens;
+
+//namespace Betalgo.Blueflow.OpenAPIToCode;
+
+//public class BlueFlowOpenApiEngine
+//{
+//    private readonly ICodeGenerator _codeGenerator;
+//    private readonly BlueFlowOpenApiEngineConfiguration _configuration;
+//    public readonly OpenApiDocument _openApiDocument;
+//    private readonly Dictionary<Guid, DefinitionBase> _definitions = new();
+//    private readonly Dictionary<Guid, OpenApiSchema> _definitionsSchema = new();
+//    public BlueFlowOpenApiEngine(ICodeGenerator codeGenerator, BlueFlowOpenApiEngineConfiguration configuration)
+//    {
+//        _codeGenerator = codeGenerator;
+//        _configuration = configuration;
+//        using var stream = File.OpenRead(configuration.OpenApiDocumentationPath);
+//        _openApiDocument = new OpenApiStreamReader().Read(stream, out var diagnostic);
+//    }
+
+//    public BlueFlowOpenApiEngine(ICodeGenerator codeGenerator)
+//        : this(codeGenerator, new BlueFlowOpenApiEngineConfiguration())
+//    {
+//    }
+
+//    public void Start()
+//    {
+//        GenerateBaseFilesIfNotExistAsync(_configuration.OutputDirectory, _configuration.ProjectName);
+//        GenerateBlueflowIds();
+//        ExportOpenAPiDocument();
+//        CollectEnumDefinitions();
+//        CollectClassDefinitions();
+//        CalculateNames();
+//        CalculateTypes();
+//        GenerateCodes();
+//    }
+
+//    private void GenerateCodes2()
+//    {
+//        foreach (var (name, schema) in _openApiDocument.Components.Schemas)
+//        {
+//            GenerateCodes3(schema,name);
+//            //ProcessSchemaRecursively(schema, name, [GenerateCodes3]);
+//        }
+//    }
+
+//    private void GenerateCodes3(OpenApiSchema schema, string? key)
+//    {
+//        var fileDef = new FileDefinition
+//        {
+//            Namespace = _configuration.ProjectName,
+//            Content = [_codeGenerator.RenderClass(schema, null)],
+//            Usings = ["System.Text.Json.Serialization", "System.Collections", "System.Text.Json"]
+//        };
+//        var classesDir = _configuration.OutputDirectory;
+//        var code = _codeGenerator.RenderFile(fileDef);
+//        var filePath = GetUniqueFilePath(classesDir, $"{schema.GetSelfKey()}.cs");
+//        File.WriteAllText(filePath, code);
+//    }
+//    public void Start2()
+//    {
+//        GenerateBaseFilesIfNotExistAsync(_configuration.OutputDirectory, _configuration.ProjectName);
+//        ProcessSchema();
+//        ExportOpenAPiDocument();
+//        CollectClasses();
+//        ExportOpenAPiDocument();
+//        GenerateCodes2();
+//    }
+
+//    private void CollectClasses()
+//    {
+//        foreach (var (name, schema) in _openApiDocument.Components.Schemas)
+//        {
+//            ProcessSchemaRecursively(schema, name, [FindClass]);
+//        }
+//    }
+
+//    private void FindClass(OpenApiSchema schema, string? key)
+//    {
+//        if (schema.IsClass())
+//        {
+//            if (schema.IsOneOf())
+//            {
+//                schema.SetBlueflowName(_codeGenerator.NamingService.Convert(key, NamingPurpose.Class));
+//                foreach (var openApiSchema in schema.OneOf)
+//                {
+//                    openApiSchema.SetBlueflowName(_codeGenerator.NamingService.Convert(key + "As" + openApiSchema.Type, NamingPurpose.Class));
+//                }
+//            }
+//            else
+//            {
+//                schema.SetBlueflowName(_codeGenerator.NamingService.Convert(key, NamingPurpose.Class));
+//            }
+//  //          schema.SetBlueflowName(_codeGenerator.NamingService.Convert(key, NamingPurpose.Class));
+//            _definitionsSchema.Add(schema.GetBlueFlowId(), schema);
+//        }
+//    }
+//    private void UpdateBlueflowTypes(OpenApiSchema schema, string? key)
+//    {
+//        if (schema.IsClass())
+//        {
+//            _definitionsSchema.Add(schema.GetBlueFlowId(), schema);
+//        }
+//    }
+
+//    private void ProcessSchema()
+//    {
+
+//        Action<OpenApiSchema, string?>[] rules =
+//        [
+//            SchemaHelpers.SetBlueflowId,
+//            SchemaHelpers.SetBlueflowSelfKey,
+//            (schema, key) => ConvertTypeIfItIsPoly(schema, key, "object")
+//        ];
+        
+//        foreach (var (name, schema) in _openApiDocument.Components.Schemas)
+//        {
+//            ProcessSchemaRecursively(schema, name, rules);
+//        }
+//    }
+
+//    private void CalculateTypes()
+//    {
+//        var classes = _definitions.Values.OfType<ClassDefinition>().ToList();
+//        foreach (var classDefinition in classes)
+//        {
+//            foreach (var propertyDefinition in classDefinition.Properties)
+//            {
+//                if (propertyDefinition.TypeId != null)
+//                {
+//                    propertyDefinition.Type = _definitions.Values
+//                        .FirstOrDefault(d => d.Id == propertyDefinition.TypeId)
+//                        ?.Name;
+//                    var a = _definitions.Values.FirstOrDefault(d => d.Id == propertyDefinition.TypeId);
+//                    if (a == null)
+//                    {
+//                        ;
+//                    }
+//                }
+
+//                foreach (var propertyDefinitionSubType in propertyDefinition.SubTypes)
+//                {
+//                    propertyDefinitionSubType.Type = _definitions.Values
+//                        .FirstOrDefault(d => d.Id == propertyDefinition.TypeId)
+//                        ?.Name;
+
+//                }
+//            }
+//        }
+//    }
+
+//    /// <summary>
+//    /// Processes an OpenAPI file, assigns x-blueflow-id GUIDs to all schemas, enums, and fields, and writes the result to a new file.
+//    /// </summary>
+//    /// <returns></returns>
+//    public void GenerateBlueflowIds()
+//    {
+//        // Add x-blueflow-id to all schemas, enums, and fields
+//        //if (_openApiDocument.Components?.Schemas != null)
+//        //{
+//        //    foreach (var (key, schema) in _openApiDocument.Components.Schemas)
+//        //    {
+//        //        ProcessSchemaRecursively(schema, key, SchemaHelpers.AddBlueflowId);
+//        //        ProcessSchemaRecursively(schema, key, AddBlueflowSelfKey);
+//        //       // ProcessSchemaRecursively(schema, key, ConvertType);
+//        //    }
+//        //}
+
+//        //// Add x-blueflow-id to parameters
+//        //if (_openApiDocument.Paths != null)
+//        //{
+//        //    foreach (var operation in _openApiDocument.Paths.SelectMany(pathItem => pathItem.Value.Operations))
+//        //    {
+//        //        if (operation.Value.Parameters == null) continue;
+//        //        foreach (var parameter in operation.Value.Parameters)
+//        //        {
+//        //            if (parameter.Schema != null)
+//        //            {
+//        //                ProcessSchemaRecursively(parameter.Schema, parameter.Name, AddBlueflowId);
+//        //                ProcessSchemaRecursively(parameter.Schema, parameter.Name, AddBlueflowSelfKey);
+//        //            }
+//        //        }
+//        //    }
+//        //}
+
+//        //// Add x-blueflow-id to the root document
+//        //_openApiDocument.Extensions ??= new Dictionary<string, IOpenApiExtension>();
+//        //_openApiDocument.Extensions["x-blueflow-id"] = new OpenApiString(Guid.NewGuid().ToString());
+//    }
+//    private void ProcessSchemaRecursively(OpenApiSchema? schema,
+//        string key,
+//        params Action<OpenApiSchema, string?>[] rules)
+//    {
+//        if (schema == null) return;
+
+//        foreach (var r in rules) r(schema, key);
+
+//        foreach (var prop in schema.Properties)
+//            ProcessSchemaRecursively(prop.Value, prop.Key, rules);
+
+//        if (schema is { Type: "array", Items: not null })
+//            ProcessSchemaRecursively(schema.Items, key, rules);
+
+//        foreach (var s in schema.AllOf) ProcessSchemaRecursively(s, key, rules);
+//        foreach (var s in schema.OneOf) ProcessSchemaRecursively(s, key, rules);
+//        foreach (var s in schema.AnyOf) ProcessSchemaRecursively(s, key, rules);
+//    }
+
+
+
+//    /// <summary>
+//    /// Processes an OpenAPI file, assigns x-blueflow-id GUIDs to all schemas, enums, and fields, and writes the result to a new file.
+//    /// </summary>
+//    /// <returns></returns>
+//    //public void GenerateTypesForPoly()
+//    //{
+//    //    // Add x-blueflow-id to all schemas, enums, and fields
+//    //    if (_openApiDocument.Components?.Schemas != null)
+//    //    {
+//    //        foreach (var (key, schema) in _openApiDocument.Components.Schemas)
+//    //        {
+//    //            GenerateTypesForPolyRecursively(schema);
+//    //        }
+//    //    }
+
+//    //    // Add x-blueflow-id to parameters
+//    //    if (_openApiDocument.Paths != null)
+//    //    {
+//    //        foreach (var operation in _openApiDocument.Paths.SelectMany(pathItem => pathItem.Value.Operations.Values))
+//    //        {
+//    //            if (operation.Parameters == null) continue;
+//    //            foreach (var parameter in operation.Parameters)
+//    //            {
+//    //                if (parameter.Schema != null)
+//    //                {
+//    //                    GenerateTypesForPolyRecursively(parameter.Schema);
+//    //                }
+//    //            }
+//    //        }
+//    //    }
+//    //}
+//    /// <summary>
+//    /// Recursively processes a schema and all its nested objects, adding BlueflowIds to all elements.
+//    /// </summary>
+//    //private void GenerateTypesForPolyRecursively(OpenApiSchema? schema)
+//    //{
+//    //    // Skip if schema is null
+//    //    if (schema == null) return;
+
+//    //    // Process properties if this is an object
+//    //    if (schema.Properties != null)
+//    //    {
+//    //        foreach (var prop in schema.Properties.Values)
+//    //        {
+//    //            // Recursively process this property's schema
+//    //            GenerateTypesForPolyRecursively(prop);
+//    //        }
+//    //    }
+
+//    //    // Process items if this is an array
+//    //    if (schema.Type == "array" && schema.Items != null)
+//    //    {
+//    //        GenerateTypesForPolyRecursively(schema.Items);
+//    //    }
+
+//    //    // Process allOf schemas
+//    //    if (schema.AllOf != null)
+//    //    {
+//    //        ConvertType(schema, "object");
+//    //        foreach (var allOfSchema in schema.AllOf)
+//    //        {
+//    //            GenerateTypesForPolyRecursively(allOfSchema);
+//    //        }
+//    //    }
+
+//    //    // Process oneOf schemas
+//    //    if (schema.OneOf != null)
+//    //    {
+//    //        ConvertType(schema, "object");
+//    //        foreach (var oneOfSchema in schema.OneOf)
+//    //        {
+//    //            GenerateTypesForPolyRecursively(oneOfSchema);
+//    //        }
+//    //    }
+
+//    //    // Process anyOf schemas
+//    //    if (schema.AnyOf != null)
+//    //    {
+//    //        ConvertType(schema, "object");
+//    //        foreach (var anyOfSchema in schema.AnyOf)
+//    //        {
+//    //            GenerateTypesForPolyRecursively(anyOfSchema);
+//    //        }
+//    //    }
+//    //}
+//    /// <summary>
+//    /// Recursively processes a schema and all its nested objects, adding BlueflowIds to all elements.
+//    /// </summary>
+//    private void ProcessSchemaRecursively(OpenApiSchema? schema, string key, Action<OpenApiSchema, string?> method)
+//    {
+//        // Skip if schema is null
+//        if (schema == null) return;
+
+//        method(schema,key);
+
+//        // Process properties if this is an object
+//        if (schema.Properties != null)
+//        {
+//            foreach (var prop in schema.Properties)
+//            {
+//                method(prop.Value,prop.Key);
+
+//                // Recursively process this property's schema
+//                ProcessSchemaRecursively(prop.Value, prop.Key,method);
+//            }
+//        }
+
+//        // Process items if this is an array
+//        if (schema.Type == "array" && schema.Items != null)
+//        {
+//            ProcessSchemaRecursively(schema.Items, key, method);
+//        }
+
+//        // Process allOf schemas
+//        if (schema.AllOf != null)
+//        {
+//            foreach (var allOfSchema in schema.AllOf)
+//            {
+//                ProcessSchemaRecursively(allOfSchema, key, method);
+//            }
+//        }
+
+//        // Process oneOf schemas
+//        if (schema.OneOf != null)
+//        {
+//            foreach (var oneOfSchema in schema.OneOf)
+//            {
+//                ProcessSchemaRecursively(oneOfSchema, key, method);
+//            }
+//        }
+
+//        // Process anyOf schemas
+//        if (schema.AnyOf != null)
+//        {
+//            foreach (var anyOfSchema in schema.AnyOf)
+//            {
+//                ProcessSchemaRecursively(anyOfSchema, key, method);
+//            }
+//        }
+
+//        // Re-process enum separately to ensure it gets a BlueflowId
+//        if (schema.Enum is { Count: > 0 })
+//        {
+//            method(schema, key);
+//            //AddBlueflowSelfKey(schema, key);
+//        }
+//    }
+    
+//    public void ExportOpenAPiDocument()
+//    {
+//        var originalPath = _configuration.OpenApiDocumentationPath;
+//        var directory = Path.GetDirectoryName(originalPath);
+//        var filename = Path.GetFileNameWithoutExtension(originalPath);
+//        var extension = Path.GetExtension(originalPath);
+//        var newPath = Path.Combine(directory ?? string.Empty, $"{filename}_v2{extension}");
+//        using var outputStream = File.Create(newPath);
+//        var writer = new Microsoft.OpenApi.Writers.OpenApiYamlWriter(new StreamWriter(outputStream));
+//        _openApiDocument.SerializeAsV3(writer);
+//        writer.Flush();
+//    }
+
+//    public void CalculateNames()
+//    {
+//        var classes = _definitions.Values.OfType<ClassDefinition>().ToList();
+//        foreach (var classDefinition in classes)
+//        {
+//            classDefinition.Name = _codeGenerator.NamingService.Convert(classDefinition.Name, NamingPurpose.Class);
+//        }
+//        foreach (var classDefinition in classes)
+//        {
+//            //if (classDefinition.ParentIds.Any())
+//            //{
+//            //    var newName = classDefinition.ParentIds.Aggregate(string.Empty, (current, classDefinitionParentId) => current + _definitions.Values.OfType<ClassDefinition>().FirstOrDefault(c => c.Id == classDefinitionParentId)?.Name) + classDefinition.Name;
+//            //    classDefinition.Name = _codeGenerator.NamingService.Convert(newName, NamingPurpose.Class);
+//            //}
+//            //else
+//            {
+//                classDefinition.Name = _codeGenerator.NamingService.Convert(classDefinition.Name, NamingPurpose.Class);
+//            }
+//            classDefinition.Name = ApplyClassNamePrefixSuffix(classDefinition.Name);
+//        }
+
+//        var enums = _definitions.Values.OfType<EnumDefinition>().ToList();
+//        foreach (var enumDefinition in enums)
+//        {
+//            enumDefinition.Name = _codeGenerator.NamingService.Convert(enumDefinition.Name, NamingPurpose.Enum);
+//        }
+//        foreach (var enumDef in enums)
+//        {
+//            if (enumDef.ParentIds.Any())
+//            {
+//                var newName = enumDef.ParentIds.Aggregate(string.Empty, (current, enumDefParentId) => current + _definitions.Values.OfType<ClassDefinition>().FirstOrDefault(c => c.Id == enumDefParentId)?.Name) + enumDef.Name;
+//                enumDef.Name = _codeGenerator.NamingService.Convert(newName, NamingPurpose.Enum) + _codeGenerator.NamingService.Convert(enumDef.Name, NamingPurpose.Enum);
+//            }
+//            else
+//            {
+//                enumDef.Name = _codeGenerator.NamingService.Convert(enumDef.Name, NamingPurpose.Enum);
+//            }
+//            foreach (var value in enumDef.Values)
+//            {
+//                value.Name = _codeGenerator.NamingService.Convert(value.Name, NamingPurpose.EnumMember);
+//            }
+//            enumDef.Name = ApplyClassNamePrefixSuffix(enumDef.Name);
+
+//        }
+//    }
+
+//    // Returns a unique file path by appending _1, _2, etc. if needed
+//    private string GetUniqueFilePath(string directory, string baseFileName)
+//    {
+//        string filePath = Path.Combine(directory, baseFileName);
+//        if (!File.Exists(filePath))
+//            return filePath;
+//        string name = Path.GetFileNameWithoutExtension(baseFileName);
+//        string ext = Path.GetExtension(baseFileName);
+//        int counter = 1;
+//        string newFilePath;
+//        do
+//        {
+//            newFilePath = Path.Combine(directory, $"{name}_{counter}{ext}");
+//            counter++;
+//        } while (File.Exists(newFilePath));
+//        return newFilePath;
+//    }
+
+//    public void GenerateCodes()
+//    {
+//        var enums = _definitions.Values.OfType<EnumDefinition>().ToList();
+//        var enumsDir = Path.Combine(_configuration.OutputDirectory, "Enums");
+//        if (!Directory.Exists(enumsDir))
+//            Directory.CreateDirectory(enumsDir);
+//        foreach (var enumDef in enums)
+//        {
+//            var fileDef = new FileDefinition
+//            {
+//                Namespace = _configuration.ProjectName + ".Enums",
+//                Enums = [enumDef],
+//                Usings = ["System.Text.Json.Serialization", "System.Collections"]
+//            };
+//            var code = _codeGenerator.RenderFile(fileDef);
+//            var filePath = GetUniqueFilePath(enumsDir, $"{enumDef.Name}.cs");
+//            File.WriteAllText(filePath, code);
+//        }
+//        var classesDir = _configuration.OutputDirectory;
+//        if (!Directory.Exists(classesDir))
+//            Directory.CreateDirectory(classesDir);
+//        var classes = _definitions.Values.OfType<ClassDefinition>().ToList();
+//        foreach (var classDefinition in classes.Where(r => !r.ParentIds.Any()))
+//        {
+//            var fileDef = new FileDefinition
+//            {
+//                Namespace = _configuration.ProjectName,
+//                Classes = [classDefinition],
+//                Usings = ["System.Text.Json.Serialization", "System.Collections", "System.Text.Json"]
+//            };
+//            var code = _codeGenerator.RenderFile(fileDef);
+//            var filePath = GetUniqueFilePath(classesDir, $"{classDefinition.Name}.cs");
+//            File.WriteAllText(filePath, code);
+//        }
+//    }
+
+//    public async Task GenerateCodeFilesFromOpenApiAsync(List<ClassDefinition> allClasses, string outputDirectory, string projectName)
+//    {
+//        Directory.CreateDirectory(outputDirectory);
+
+//        foreach (var classDef in allClasses)
+//        {
+//            var fileDef = new FileDefinition
+//            {
+//                Namespace = projectName,
+//                Classes = [classDef],
+//                Usings = ["System.Text.Json.Serialization"]
+//            };
+
+//            var code = _codeGenerator.RenderFile(fileDef);
+//            var filePath = Path.Combine(outputDirectory, $"{classDef.Name}.cs");
+//            await File.WriteAllTextAsync(filePath, code);
+//        }
+//    }
+
+//    public async Task GenerateEnumFilesFromOpenApiAsync(List<EnumDefinition> allEnums, string outputDirectory, string projectName)
+//    {
+//        Directory.CreateDirectory(outputDirectory);
+//        foreach (var enumDef in allEnums)
+//        {
+//            var code = _codeGenerator.RenderStringEnum(enumDef);
+//            var filePath = Path.Combine(outputDirectory, $"{enumDef.Name}.cs");
+//            await File.WriteAllTextAsync(filePath, code);
+//        }
+//    }
+//    private void CollectEnumDefinitionsR(string keyR, OpenApiSchema? schemaR, List<Guid> parents)
+//    {
+//        if (schemaR != null)
+//        {
+//            parents.Add(schemaR.GetBlueFlowId());
+//            var enumDef = schemaR.ExtractEnum(keyR, _configuration.ProjectName);
+//            if (enumDef != null)
+//            {
+//                enumDef.ParentIds = parents;
+//                if (schemaR.Extensions != null && schemaR.Extensions.TryGetValue("x-stainless-const", out var ext))
+//                {
+//                    return;
+//                }
+//                _definitions.Add(enumDef.Id, enumDef);
+//            }
+
+//            if (schemaR.Properties != null)
+//            {
+//                foreach (var propKvp in schemaR.Properties.Where(r => r.Value.Reference == null).ToList())
+//                {
+//                    CollectEnumDefinitionsR(propKvp.Key, propKvp.Value, parents);
+//                }
+//            }
+//        }
+//    }
+
+//    private void CollectEnumDefinitions()
+//    {
+//        if (_openApiDocument.Components?.Schemas != null)
+//        {
+//            foreach (var (key, schema) in _openApiDocument.Components.Schemas)
+//            {
+//                var enumDef = schema.ExtractEnum(key, _configuration.ProjectName);
+//                if (enumDef != null)
+//                {
+//                    if (schema.Extensions != null && schema.Extensions.TryGetValue("x-stainless-const", out var ext))
+//                    {
+//                        continue;
+//                    }
+//                    enumDef.ParentIds = [schema.GetBlueFlowId()];
+//                    _definitions.Add(enumDef.Id, enumDef);
+//                    continue;
+//                }
+
+//                // --- Enum detection in object properties ---
+//                if (schema.Properties != null)
+//                {
+//                    foreach (var propKvp in schema.Properties.Where(r => r.Value.Reference == null).ToList())
+//                    {
+//                        CollectEnumDefinitionsR(propKvp.Key, propKvp.Value, [schema.GetBlueFlowId()]);
+//                    }
+//                }
+//            }
+//        }
+
+
+//        //// --- Inline enums in parameters ---
+//        //if (_openApiDocument.Paths != null)
+//        //{
+//        //    foreach (var pathItem in _openApiDocument.Paths)
+//        //    {
+//        //        foreach (var operation in pathItem.Value.Operations.Values)
+//        //        {
+//        //            if (operation.Parameters == null) continue;
+//        //            foreach (var parameter in operation.Parameters)
+//        //            {
+//        //                var enumDef = parameter.Schema.ExtractEnum(parameter.Name, _configuration.ProjectName);
+//        //                if (enumDef != null)
+//        //                {
+//        //                    _definitions.Add(enumDef.Id, enumDef);
+//        //                }
+//        //            }
+//        //        }
+//        //    }
+//        //}
+//    }
+
+//    private IEnumerable<ClassDefinition> GetNestedClassDefinitions(ClassDefinition? classDefinition)
+//    {
+//        if (classDefinition == null)
+//            return [];
+
+//        return classDefinition.NestedClasses
+//            .SelectMany(GetNestedClassDefinitions)
+//            .Concat([classDefinition])
+//            .ToList();
+//    }
+//    //private IEnumerable<ClassDefinition> GetOneOfNestedDefinitions(ClassDefinition? classDefinition)
+//    //{
+//    //    if (classDefinition == null)
+//    //        return [];
+
+//    //    return classDefinition.Properties
+//    //        .SelectMany(GetOneOfNestedDefinitions)
+//    //        .Concat([classDefinition])
+//    //        .ToList();
+//    //}
+//    private void CollectClassDefinitions()
+//    {
+//        if (_openApiDocument.Components?.Schemas != null)
+//        {
+//            foreach (var (key, schema) in _openApiDocument.Components.Schemas)
+//            {
+//                var classDef = schema.ExtractClass(key, _configuration.ProjectName, []);
+//                if (classDef != null)
+//                {
+//                    var nestedDefinitions = GetNestedClassDefinitions(classDef);
+//                    foreach (var nestedDefinition in nestedDefinitions)
+//                    {
+//                        _definitions.Add(nestedDefinition.Id, nestedDefinition);
+//                    }
+
+//                    //var OneOfNestedDefinitions = GetOneOfNestedDefinitions(classDef);
+//                }
+//            }
+//        }
+
+//    }
+
+
+//    public List<DefinitionBase> GetAllDefinitionsFromOpenApi(string openApiFilePath, string projectName)
+//    {
+//        // Ensure the BlueflowId-Name dictionary is loaded before any name assignment
+//        LoadBlueflowIdNameDictionary(openApiFilePath);
+//        using var stream = File.OpenRead(openApiFilePath);
+//        var openApiDocument = new OpenApiStreamReader().Read(stream, out var diagnostic);
+//        var definitions = new List<DefinitionBase>();
+//        var processed = new HashSet<string>();
+//        if (openApiDocument.Components?.Schemas != null)
+//        {
+//            foreach (var (key, schema) in openApiDocument.Components.Schemas)
+//            {
+//                // Enum detection in schemas
+//                if (schema.Enum != null && schema.Enum.Count > 0 && (schema.Type == "string" || schema.Type == null))
+//                {
+//                    Guid blueflowId = Guid.Empty;
+//                    if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-id", out var ext) && ext is OpenApiString idStr && Guid.TryParse(idStr.Value, out var parsedId))
+//                    {
+//                        blueflowId = parsedId;
+//                    }
+//                    else
+//                    {
+//                        blueflowId = Guid.NewGuid();
+//                    }
+//                    var enumName = GetNameByBlueflowId(blueflowId);
+//                    var values = schema.Enum.OfType<OpenApiString>().Select(e => new EnumValueDefinition
+//                    {
+//                        Name = _codeGenerator.NamingService.Convert(e.Value ?? string.Empty, NamingPurpose.EnumMember),
+//                        JsonName = e.Value ?? string.Empty
+//                    }).ToList();
+//                    var enumDef = new EnumDefinition
+//                    {
+//                        Id = blueflowId,
+//                        Name = enumName,
+//                        Namespace = projectName,
+//                        Values = values,
+//                        Summary = schema.Description
+//                    };
+//                    definitions.Add(enumDef);
+//                    continue;
+//                }
+//                // --- Enum detection in object properties ---
+//                if (schema.Properties != null)
+//                {
+//                    foreach (var propKvp in schema.Properties)
+//                    {
+//                        var prop = propKvp.Value;
+//                        if (prop.Enum != null && prop.Enum.Count > 0 && (prop.Type == "string" || prop.Type == null))
+//                        {
+//                            Guid blueflowId = Guid.Empty;
+//                            if (prop.Extensions != null && prop.Extensions.TryGetValue("x-blueflow-id", out var ext) && ext is OpenApiString idStr && Guid.TryParse(idStr.Value, out var parsedId))
+//                            {
+//                                blueflowId = parsedId;
+//                            }
+//                            else
+//                            {
+//                                blueflowId = Guid.NewGuid();
+//                            }
+//                            var enumName = GetNameByBlueflowId(blueflowId);
+//                            var values = prop.Enum.OfType<OpenApiString>().Select(e => new EnumValueDefinition
+//                            {
+//                                Name = _codeGenerator.NamingService.Convert(e.Value ?? string.Empty, NamingPurpose.EnumMember),
+//                                JsonName = e?.Value ?? string.Empty
+//                            }).ToList();
+//                            var enumDef = new EnumDefinition
+//                            {
+//                                Id = blueflowId,
+//                                Name = enumName,
+//                                Namespace = projectName,
+//                                Values = values,
+//                                Summary = prop.Description
+//                            };
+//                            // Avoid duplicates by name
+//                            if (!definitions.OfType<EnumDefinition>().Any(e => e.Name == enumDef.Name))
+//                                definitions.Add(enumDef);
+//                        }
+//                    }
+//                }
+//                var rootClassName = ApplyClassNamePrefixSuffix(_codeGenerator.NamingService.Convert(key, NamingPurpose.Class));
+//                var classDefs = GenerateClassDefinitionsRecursively(rootClassName, schema, projectName, processed, key);
+//                definitions.AddRange(classDefs);
+//            }
+//        }
+
+//        // --- Inline enums in parameters ---
+//        if (openApiDocument.Paths != null)
+//        {
+//            foreach (var pathItem in openApiDocument.Paths)
+//            {
+//                foreach (var operation in pathItem.Value.Operations.Values)
+//                {
+//                    if (operation.Parameters == null) continue;
+//                    foreach (var parameter in operation.Parameters)
+//                    {
+//                        var schema = parameter.Schema;
+//                        if (schema != null && schema.Enum != null && schema.Enum.Count > 0 && (schema.Type == "string" || schema.Type == null))
+//                        {
+//                            Guid blueflowId = Guid.Empty;
+//                            if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-id", out var ext) && ext is OpenApiString idStr && Guid.TryParse(idStr.Value, out var parsedId))
+//                            {
+//                                blueflowId = parsedId;
+//                            }
+//                            else
+//                            {
+//                                blueflowId = Guid.NewGuid();
+//                            }
+//                            var enumName = GetNameByBlueflowId(blueflowId);
+//                            var values = schema.Enum.OfType<OpenApiString>().Select(e => new EnumValueDefinition
+//                            {
+//                                Name = _codeGenerator.NamingService.Convert(e.Value ?? string.Empty, NamingPurpose.EnumMember),
+//                                JsonName = e.Value ?? string.Empty
+//                            }).ToList();
+//                            var enumDef = new EnumDefinition
+//                            {
+//                                Id = blueflowId,
+//                                Name = enumName,
+//                                Namespace = projectName,
+//                                Values = values,
+//                                Summary = parameter.Description
+//                            };
+//                            // Avoid duplicates by name
+//                            if (!definitions.OfType<EnumDefinition>().Any(e => e.Name == enumDef.Name))
+//                                definitions.Add(enumDef);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return definitions;
+//    }
+
+//    private string ApplyClassNamePrefixSuffix(string baseName)
+//    {
+//        var prefix = _codeGenerator.Configuration.ClassNamePrefix;
+//        var suffix = _codeGenerator.Configuration.ClassNameSuffix;
+//        var result = baseName;
+//        if (!string.IsNullOrEmpty(prefix) && !result.StartsWith(prefix))
+//            result = prefix + result;
+//        if (!string.IsNullOrEmpty(suffix) && !result.EndsWith(suffix))
+//            result = result + suffix;
+//        return result;
+//    }
+
+//    private string GetNestedClassName(string rootSchemaName, string propertyName, string? suffix = null)
+//    {
+//        var root = _codeGenerator.NamingService.Convert(rootSchemaName, NamingPurpose.Class);
+//        var prop = _codeGenerator.NamingService.Convert(propertyName, NamingPurpose.Class);
+//        var name = suffix == null ? $"{root}{prop}" : $"{root}{prop}{suffix}";
+//        name = _codeGenerator.NamingService.Convert(name, NamingPurpose.Class);
+//        return ApplyClassNamePrefixSuffix(name);
+//    }
+
+//    private List<ClassDefinition> GenerateClassDefinitionsRecursively(string className, OpenApiSchema schema, string projectName, HashSet<string> processed, string rootSchemaName, string? propertyPath = null)
+//    {
+//        var result = new List<ClassDefinition>();
+//        var uniqueKey = className + "|" + (propertyPath ?? className);
+//        if (!processed.Add(uniqueKey))
+//            return result;
+
+//        var properties = new List<PropertyDefinition>();
+//        var nestedClasses = new List<ClassDefinition>();
+//        if (schema.Properties != null)
+//        {
+//            foreach (var propKvp in schema.Properties)
+//            {
+//                ProcessProperty(
+//                    propKvp,
+//                    schema,
+//                    className,
+//                    projectName,
+//                    processed,
+//                    rootSchemaName,
+//                    propertyPath,
+//                    properties,
+//                    nestedClasses,
+//                    result
+//                );
+//            }
+//        }
+
+//        // Assign BlueflowId from schema.Extensions if present
+//        Guid blueflowId = Guid.Empty;
+//        if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-id", out var extClass) && extClass is OpenApiString idStrClass && Guid.TryParse(idStrClass.Value, out var parsedIdClass))
+//        {
+//            blueflowId = parsedIdClass;
+//        }
+//        else
+//        {
+//            blueflowId = Guid.NewGuid();
+//            if (!_blueflowIdNameDictionary.ContainsKey(blueflowId))
+//                _blueflowIdNameDictionary[blueflowId] = className;
+//        }
+//        var canonicalName = GetNameByBlueflowId(blueflowId);
+//        var classDef = new ClassDefinition
+//        {
+//            Id = blueflowId,
+//            Name = canonicalName,
+//            Namespace = projectName,
+//            Properties = properties,
+//            Summary = schema.Description,
+//            NestedClasses = _configuration.GenerateNestedClasses ? nestedClasses.Cast<ClassDefinition?>().ToList() : new List<ClassDefinition?>()
+//        };
+//        result.Add(classDef);
+//        return result;
+//    }
+
+//    private void ProcessProperty(
+//        KeyValuePair<string, OpenApiSchema> propKvp,
+//        OpenApiSchema parentSchema,
+//        string parentClassName,
+//        string projectName,
+//        HashSet<string> processed,
+//        string rootSchemaName,
+//        string? propertyPath,
+//        List<PropertyDefinition> properties,
+//        List<ClassDefinition> nestedClasses,
+//        List<ClassDefinition> result)
+//    {
+//        var prop = propKvp.Value;
+//        var propertyName = propKvp.Key;
+//        var nextPropertyPath = propertyPath == null ? propertyName : propertyPath + "." + propertyName;
+//        var propType = prop.Type;
+//        var isCollection = false;
+
+//        if (propertyName.Contains("."))
+//        {
+//            HandleDotProperty(prop, propertyName, projectName, processed, rootSchemaName, nextPropertyPath, properties, nestedClasses, result, ref propType);
+//        }
+//        else if (prop is { Type: "object", Reference: null })
+//        {
+//            HandleObjectProperty(prop, propertyName, projectName, processed, rootSchemaName, nextPropertyPath, properties, nestedClasses, result, ref propType);
+//        }
+//        else if (prop is { Type: "array", Items: not null })
+//        {
+//            isCollection = true;
+//            HandleArrayProperty(prop, propertyName, projectName, processed, rootSchemaName, nextPropertyPath, properties, nestedClasses, result, ref propType);
+//        }
+//        else if (!string.IsNullOrEmpty(prop.Reference?.Id))
+//        {
+//            propType = ApplyClassNamePrefixSuffix(_codeGenerator.NamingService.Convert(prop.Reference.Id, NamingPurpose.Class));
+//        }
+
+//        // Check if this property is an enum and set the type to the generated enum type if so
+//        if (prop.Enum != null && prop.Enum.Count > 0 && (prop.Type == "string" || prop.Type == null))
+//        {
+//            Guid enumBlueflowId = Guid.Empty;
+//            if (prop.Extensions != null && prop.Extensions.TryGetValue("x-blueflow-id", out var extEnum) && extEnum is OpenApiString idStrEnum && Guid.TryParse(idStrEnum.Value, out var parsedIdEnum))
+//            {
+//                enumBlueflowId = parsedIdEnum;
+//            }
+//            else
+//            {
+//                enumBlueflowId = Guid.NewGuid();
+//                if (!_blueflowIdNameDictionary.ContainsKey(enumBlueflowId))
+//                    _blueflowIdNameDictionary[enumBlueflowId] = propertyName;
+//            }
+//            var enumTypeName = GetNameByBlueflowId(enumBlueflowId);
+//            propType = enumTypeName;
+//        }
+//        Guid blueflowId = Guid.Empty;
+//        if (prop.Extensions != null && prop.Extensions.TryGetValue("x-blueflow-id", out var extProp) && extProp is OpenApiString idStrProp && Guid.TryParse(idStrProp.Value, out var parsedIdProp))
+//        {
+//            blueflowId = parsedIdProp;
+//        }
+//        else
+//        {
+//            blueflowId = Guid.NewGuid();
+//            if (!_blueflowIdNameDictionary.ContainsKey(blueflowId))
+//                _blueflowIdNameDictionary[blueflowId] = propertyName;
+//        }
+//        var canonicalName = GetNameByBlueflowId(blueflowId);        // Determine if we have a reference to another type with a BlueflowId
+//        // Use the helper class to identify the proper TypeId
+//        Guid? typeId = Generators.Models.TypeIdHelper.GetTypeIdForProperty(prop, _blueflowIdNameDictionary);
+
+//        properties.Add(new PropertyDefinition
+//        {
+//            Id = blueflowId,
+//            Name = canonicalName,
+//            Type = propType,
+//            TypeId = typeId,
+//            IsNullable = prop.Nullable,
+//            IsCollection = isCollection,
+//            Summary = prop.Description,
+//            JsonName = propertyName
+//        });
+//    }
+
+//    private void HandleDotProperty(
+//        OpenApiSchema prop,
+//        string propertyName,
+//        string projectName,
+//        HashSet<string> processed,
+//        string rootSchemaName,
+//        string nextPropertyPath,
+//        List<PropertyDefinition> properties,
+//        List<ClassDefinition> nestedClasses,
+//        List<ClassDefinition> result,
+//        ref string propType)
+//    {
+//        var nestedClassName = string.Join("", propertyName.Split('.').Select(s => _codeGenerator.NamingService.Convert(s, NamingPurpose.Class)));
+//        var nestedClassNameWithSuffix = ApplyClassNamePrefixSuffix(nestedClassName);
+//        var nestedClassDefs = GenerateClassDefinitionsRecursively(nestedClassNameWithSuffix, prop, projectName, processed, rootSchemaName, nextPropertyPath);
+//        ClassDefinition? nestedClass = nestedClassDefs.FirstOrDefault();
+//        if (nestedClass == null)
+//        {
+//            var newGuid = Guid.NewGuid();
+//            if (!_blueflowIdNameDictionary.ContainsKey(newGuid))
+//                _blueflowIdNameDictionary[newGuid] = nestedClassNameWithSuffix;
+//            nestedClass = new ClassDefinition { Id = newGuid, Name = GetNameByBlueflowId(newGuid), Namespace = projectName, Properties = new List<PropertyDefinition>(), Summary = prop.Description };
+//        }
+//        else
+//        {
+//            nestedClass.Name = GetNameByBlueflowId(nestedClass.Id);
+//        }
+//        if (_configuration.GenerateNestedClasses)
+//            nestedClasses.Add(nestedClass);
+//        else
+//            result.Add(nestedClass);
+//        propType = nestedClass.Name;
+//    }
+
+//    private void HandleObjectProperty(
+//        OpenApiSchema prop,
+//        string propertyName,
+//        string projectName,
+//        HashSet<string> processed,
+//        string rootSchemaName,
+//        string nextPropertyPath,
+//        List<PropertyDefinition> properties,
+//        List<ClassDefinition> nestedClasses,
+//        List<ClassDefinition> result,
+//        ref string propType)
+//    {
+//        var nestedClassName = GetNestedClassName(rootSchemaName, propertyName);
+//        var nestedClassDefs = GenerateClassDefinitionsRecursively(nestedClassName, prop, projectName, processed, rootSchemaName, nextPropertyPath);
+//        ClassDefinition? nestedClass = nestedClassDefs.FirstOrDefault();
+//        if (nestedClass == null)
+//        {
+//            var newGuid = Guid.NewGuid();
+//            if (!_blueflowIdNameDictionary.ContainsKey(newGuid))
+//                _blueflowIdNameDictionary[newGuid] = nestedClassName;
+//            nestedClass = new ClassDefinition { Id = newGuid, Name = GetNameByBlueflowId(newGuid), Namespace = projectName, Properties = new List<PropertyDefinition>(), Summary = prop.Description };
+//        }
+//        else
+//        {
+//            nestedClass.Name = GetNameByBlueflowId(nestedClass.Id);
+//        }
+//        if (_configuration.GenerateNestedClasses)
+//            nestedClasses.Add(nestedClass);
+//        else
+//            result.Add(nestedClass);
+//        propType = nestedClass.Name;
+//    }
+
+//    private void HandleArrayProperty(
+//        OpenApiSchema prop,
+//        string propertyName,
+//        string projectName,
+//        HashSet<string> processed,
+//        string rootSchemaName,
+//        string nextPropertyPath,
+//        List<PropertyDefinition> properties,
+//        List<ClassDefinition> nestedClasses,
+//        List<ClassDefinition> result,
+//        ref string propType)
+//    {
+//        if (prop.Items.Type == "object" && prop.Items.Reference == null)
+//        {
+//            var nestedClassName = GetNestedClassName(rootSchemaName, propertyName, "Item");
+//            var nestedClassDefs = GenerateClassDefinitionsRecursively(nestedClassName, prop.Items, projectName, processed, rootSchemaName, nextPropertyPath);
+//            ClassDefinition? nestedClass = nestedClassDefs.FirstOrDefault();
+//            if (nestedClass != null)
+//            {
+//                nestedClass.Name = GetNameByBlueflowId(nestedClass.Id);
+//                if (_configuration.GenerateNestedClasses)
+//                    nestedClasses.Add(nestedClass);
+//                else
+//                    result.Add(nestedClass);
+//                propType = nestedClass.Name;
+//            }
+//            else
+//            {
+//                var newGuid = Guid.NewGuid();
+//                if (!_blueflowIdNameDictionary.ContainsKey(newGuid))
+//                    _blueflowIdNameDictionary[newGuid] = nestedClassName;
+//                var fallbackClass = new ClassDefinition { Id = newGuid, Name = GetNameByBlueflowId(newGuid), Namespace = projectName, Properties = new List<PropertyDefinition>(), Summary = prop.Description };
+//                if (_configuration.GenerateNestedClasses)
+//                    nestedClasses.Add(fallbackClass);
+//                else
+//                    result.Add(fallbackClass);
+//                propType = fallbackClass.Name;
+//            }
+//        }
+//        else if (!string.IsNullOrEmpty(prop.Items.Reference?.Id))
+//        {
+//            propType = ApplyClassNamePrefixSuffix(_codeGenerator.NamingService.Convert(prop.Items.Reference.Id, NamingPurpose.Class));
+//        }
+//        else
+//        {
+//            propType = prop.Items.Type;
+//        }
+//    }
+
+//    public async Task GenerateFilesFromDefinitionsAsync(List<DefinitionBase> definitions, string outputDirectory, string projectName)
+//    {
+//        Directory.CreateDirectory(outputDirectory);
+//        foreach (var def in definitions)
+//        {
+//            string code;
+//            string fileName = def.Name + ".cs";
+//            if (def is ClassDefinition classDef)
+//            {
+//                var fileDef = new FileDefinition
+//                {
+//                    Namespace = projectName,
+//                    Classes = [classDef],
+//                    Usings = ["System.Text.Json.Serialization"]
+//                };
+//                code = _codeGenerator.RenderFile(fileDef);
+//            }
+//            else if (def is EnumDefinition enumDef)
+//            {
+//                code = _codeGenerator.RenderStringEnum(enumDef);
+//            }
+//            else
+//            {
+//                // For future definition types
+//                continue;
+//            }
+//            var filePath = Path.Combine(outputDirectory, fileName);
+//            await File.WriteAllTextAsync(filePath, code);
+//        }
+//    }
+
+//    public async Task GenerateBaseFilesIfNotExistAsync(string outputDirectory, string projectName)
+//    {
+//        Directory.CreateDirectory(outputDirectory);
+//        var baseFiles = _codeGenerator.RenderBase();
+//        var baseFileNames = new[] { "StringEnumBaseClass.cs", $"{projectName}.sln", $"{projectName}.csproj" };
+
+//        for (int i = 0; i < baseFiles.Count && i < baseFileNames.Length; i++)
+//        {
+//            var filePath = Path.Combine(outputDirectory, baseFileNames[i]);
+//            if (!File.Exists(filePath))
+//            {
+//                // For solution and project templates, render with Scriban if needed
+//                var content = baseFiles[i];
+//                if (baseFileNames[i].EndsWith(".sln"))
+//                {
+//                    var template = Scriban.Template.Parse(content);
+//                    content = template.Render(new { solution_guid = Guid.NewGuid().ToString("B").ToUpper(), project_name = projectName, project_guid = Guid.NewGuid().ToString("B").ToUpper() });
+//                }
+//                else if (baseFileNames[i].EndsWith(".csproj"))
+//                {
+//                    var template = Scriban.Template.Parse(content);
+//                    content = template.Render(new { target_framework = "net9.0" });
+//                }
+//                else if (baseFileNames[i].EndsWith(".cs"))
+//                {
+//                    var template = Scriban.Template.Parse(content);
+//                    content = template.Render(new { project_namespace = projectName });
+//                }
+//                await File.WriteAllTextAsync(filePath, content);
+//            }
+//        }
+//    }
+
+
+
+    
+//    private static void ConvertTypeIfItIsPoly(OpenApiSchema schema, string? key, string? to)
+//    {
+//        if (schema.IsPoly() && schema.Type == null)
+//        {
+//            schema.Type = to;
+
+//        }
+//    }
+
+//    /// <summary>
+//    /// Returns a dictionary mapping x-blueflow-id GUIDs to their schema/property/enum names from the OpenAPI file.
+//    /// </summary>
+//    public Dictionary<string, string> GetBlueflowIdDictionary(string openApiFilePath)
+//    {
+//        var result = new Dictionary<string, string>();
+//        using var stream = File.OpenRead(openApiFilePath);
+//        var openApiDocument = new OpenApiStreamReader().Read(stream, out var diagnostic);
+
+//        // Root document
+//        if (openApiDocument.Extensions != null && openApiDocument.Extensions.TryGetValue("x-blueflow-id", out var rootIdExt))
+//        {
+//            if (rootIdExt is OpenApiString rootId)
+//                result[rootId.Value] = "root";
+//        }
+
+//        // Schemas
+//        if (openApiDocument.Components?.Schemas != null)
+//        {
+//            foreach (var (key, schema) in openApiDocument.Components.Schemas)
+//            {
+//                if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-id", out var ext) && ext is OpenApiString id)
+//                    result[id.Value] = key;
+//                // Properties
+//                if (schema.Properties != null)
+//                {
+//                    foreach (var propKvp in schema.Properties)
+//                    {
+//                        var prop = propKvp.Value;
+//                        if (prop.Extensions != null && prop.Extensions.TryGetValue("x-blueflow-id", out var propExt) && propExt is OpenApiString propId)
+//                            result[propId.Value] = $"{key}.{propKvp.Key}";
+//                    }
+//                }
+//            }
+//        }
+
+//        // Parameters
+//        if (openApiDocument.Paths != null)
+//        {
+//            foreach (var pathItem in openApiDocument.Paths)
+//            {
+//                foreach (var operation in pathItem.Value.Operations.Values)
+//                {
+//                    if (operation.Parameters == null) continue;
+//                    foreach (var parameter in operation.Parameters)
+//                    {
+//                        if (parameter.Schema != null && parameter.Schema.Extensions != null && parameter.Schema.Extensions.TryGetValue("x-blueflow-id", out var paramExt) && paramExt is OpenApiString paramId)
+//                        {
+//                            result[paramId.Value] = $"parameter:{parameter.Name}";
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return result;
+//    }
+
+//    private static Dictionary<Guid, string> _blueflowIdNameDictionary = new();
+//    private static bool _blueflowIdNameDictionaryLoaded = false;
+
+//    /// <summary>
+//    /// Loads the BlueflowId-Name dictionary from the OpenAPI file (in memory only).
+//    /// </summary>
+//    public void LoadBlueflowIdNameDictionary(string openApiFilePath)
+//    {
+//        if (_blueflowIdNameDictionaryLoaded) return;
+//        var dict = GetBlueflowIdDictionary(openApiFilePath)
+//            .Where(kvp => Guid.TryParse(kvp.Key, out _))
+//            .ToDictionary(kvp => Guid.Parse(kvp.Key), kvp => kvp.Value);
+//        _blueflowIdNameDictionary = dict;
+//        _blueflowIdNameDictionaryLoaded = true;
+//    }
+
+//    /// <summary>
+//    /// Updates the name for a given BlueflowId in the dictionary (in memory only).
+//    /// </summary>
+//    public void UpdateBlueflowIdName(Guid id, string newName)
+//    {
+//        _blueflowIdNameDictionary[id] = newName;
+//    }
+
+//    /// <summary>
+//    /// Gets the canonical name for a given BlueflowId from the dictionary.
+//    /// </summary>
+//    public string GetNameByBlueflowId(Guid id)
+//    {
+//        if (_blueflowIdNameDictionary.TryGetValue(id, out var name))
+//            return name;
+//        return string.Empty;
+//    }
+
+//    /// <summary>
+//    /// Gets an OpenApiSchema by its reference.
+//    /// </summary>
+//    private OpenApiSchema? GetSchemaByReference(OpenApiReference reference, OpenApiDocument? document = null)
+//    {
+//        if (string.IsNullOrEmpty(reference?.Id) || document?.Components?.Schemas == null)
+//            return null;
+
+//        // For schema references, extract the name from the reference path
+//        if (reference.Type == ReferenceType.Schema)
+//        {
+//            string schemaName = reference.Id;
+//            if (document.Components.Schemas.TryGetValue(schemaName, out var schema))
+//                return schema;
+//        }
+
+//        return null;
+//    }
+
+//    // Refactor: Use GetNameByBlueflowId for all name assignments in code generation
+//    // Example for ClassDefinition and PropertyDefinition:
+//    // When creating ClassDefinition or PropertyDefinition, set Name = GetNameByBlueflowId(id)
+
+//    /// <summary>
+//    /// Determines the TypeId for a property that references another type.
+//    /// </summary>
+//    private Guid? GetTypeIdForProperty(OpenApiSchema prop, string propertyName)
+//    {
+//        // Case 1: Direct reference to another schema
+//        if (!string.IsNullOrEmpty(prop.Reference?.Id))
+//        {
+//            // Look for the reference in our dictionary by name
+//            var entries = _blueflowIdNameDictionary
+//                .Where(kvp => kvp.Value == prop.Reference.Id)
+//                .ToList();
+
+//            if (entries.Any())
+//            {
+//                return entries.First().Key;
+//            }
+//        }
+//        // Case 2: For array items with references
+//        else if (prop.Type == "array" && prop.Items?.Reference != null && !string.IsNullOrEmpty(prop.Items.Reference.Id))
+//        {
+//            // Look for the items reference in our dictionary by name
+//            var entries = _blueflowIdNameDictionary
+//                .Where(kvp => kvp.Value == prop.Items.Reference.Id)
+//                .ToList();
+
+//            if (entries.Any())
+//            {
+//                return entries.First().Key;
+//            }
+//        }
+//        // Case 3: For enum types identified earlier
+//        else if (prop.Enum != null && prop.Enum.Count > 0 && (prop.Type == "string" || prop.Type == null))
+//        {
+//            // For enums, use the enum's BlueflowId that was assigned earlier
+//            if (prop.Extensions != null &&
+//                prop.Extensions.TryGetValue("x-blueflow-id", out var enumExt) &&
+//                enumExt is OpenApiString enumIdStr &&
+//                Guid.TryParse(enumIdStr.Value, out var enumId))
+//            {
+//                return enumId;
+//            }
+//        }
+
+//        return null;
+//    }
+//}

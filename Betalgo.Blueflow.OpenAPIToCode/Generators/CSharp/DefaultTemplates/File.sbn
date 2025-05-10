@@ -1,0 +1,10 @@
+{{~ if usings ~}}
+{{ for u in usings }}using {{ u }};
+{{ end }}
+{{~ end ~}}
+{{~ if ns ~}}
+namespace {{ ns }};
+{{~ end ~}}
+{{~ for item in items ~}}
+{{ item }}
+{{~ end ~}}
