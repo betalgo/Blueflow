@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Betalgo.Blueflow.Playground
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{77D76689-DCA4-453D-B44B-10C760755528}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Betalgo.Blueflow.OpenApiExtensions", "Betalgo.Blueflow.OpenApiExtensions\Betalgo.Blueflow.OpenApiExtensions.csproj", "{D17EE280-E1D8-4787-A82D-977240174B32}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{B67B8570-F4A1-4A5B-BD42-2E4E26A3072B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B67B8570-F4A1-4A5B-BD42-2E4E26A3072B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B67B8570-F4A1-4A5B-BD42-2E4E26A3072B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D17EE280-E1D8-4787-A82D-977240174B32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D17EE280-E1D8-4787-A82D-977240174B32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D17EE280-E1D8-4787-A82D-977240174B32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D17EE280-E1D8-4787-A82D-977240174B32}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -40,5 +46,6 @@ Global
 		{4EC49073-2068-4FF5-9C26-B24A3A53A540} = {37EAD6BE-CEEE-4D84-926A-0BCBB5788796}
 		{B67B8570-F4A1-4A5B-BD42-2E4E26A3072B} = {4EC49073-2068-4FF5-9C26-B24A3A53A540}
 		{77D76689-DCA4-453D-B44B-10C760755528} = {37EAD6BE-CEEE-4D84-926A-0BCBB5788796}
+		{D17EE280-E1D8-4787-A82D-977240174B32} = {77D76689-DCA4-453D-B44B-10C760755528}
 	EndGlobalSection
 EndGlobal

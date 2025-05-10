@@ -1,9 +1,12 @@
+using Betalgo.Blueflow.OpenApiExtensions;
 using Betalgo.Blueflow.OpenAPIToCode.Generators;
 using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Writers;
 using Scriban;
+using System.Diagnostics;
+using System.IO;
 
 namespace Betalgo.Blueflow.OpenAPIToCode;
 
@@ -17,8 +20,11 @@ public class BlueFlowOpenApiEngine
     {
         _codeGenerator = codeGenerator;
         _configuration = configuration;
-        using var stream = File.OpenRead(configuration.OpenApiDocumentationPath);
-        _openApiDocument = new OpenApiStreamReader().Read(stream, out var diagnostic);
+        if (configuration.OpenApiDocumentationPath != null)
+        {
+            using var stream = File.OpenRead(configuration.OpenApiDocumentationPath);
+            _openApiDocument = new OpenApiStreamReader().Read(stream, out var diagnostic);
+        }
     }
 
     public BlueFlowOpenApiEngine(ICodeGenerator codeGenerator) : this(codeGenerator, new())
@@ -68,6 +74,49 @@ public class BlueFlowOpenApiEngine
         CollectClasses();
         ExportOpenAPiDocument();
         GenerateCodes2();
+      //  RunCodeCleanup();
+    }
+
+    private void RunCodeCleanup()
+    {
+        try
+        {
+            Console.WriteLine("Running ReSharper code cleanup...");
+            var solutionPath = Path.Combine(_configuration.OutputDirectory, $"{_configuration.ProjectName}.sln");
+            
+            if (File.Exists(solutionPath))
+            {
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = "jb",
+                    Arguments = $"cleanupcode \"{solutionPath}\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = false
+                };
+
+                using var process = Process.Start(processStartInfo);
+                if (process != null)
+                {
+                    var output = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit();
+                    Console.WriteLine($"Code cleanup completed with exit code: {process.ExitCode}");
+                    Console.WriteLine(output);
+                }
+                else
+                {
+                    Console.WriteLine("Failed to start code cleanup process.");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Solution file not found at: {solutionPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error running code cleanup: {ex.Message}");
+        }
     }
 
     private void CollectClasses()
@@ -164,7 +213,7 @@ public class BlueFlowOpenApiEngine
 
         Action<OpenApiSchema, string?>[] rules =
         [
-            SchemaHelpers.SetBlueflowId,
+            (schema, key) => schema.SetBlueflowId(),
             SchemaHelpers.SetBlueflowSelfKey,
             (schema, key) => schema.ConvertPolyToEnumIfApplicable(),
             (schema, key) => schema.ConvertNullableReferenceIfApplicable(),
@@ -188,7 +237,7 @@ public class BlueFlowOpenApiEngine
         foreach (var prop in schema.Properties.Where(r => r.Value.Reference == null))
             ProcessSchemaRecursively(prop.Value, prop.Key, rules);
 
-        if (schema is { Type: "array", Items: not null } && schema.Items.Reference == null)
+        if (schema is { Type: "array", Items.Reference: null })
             ProcessSchemaRecursively(schema.Items, key, rules);
 
         foreach (var s in schema.AllOf.Where(r => r.Reference == null)) ProcessSchemaRecursively(s, key, rules);

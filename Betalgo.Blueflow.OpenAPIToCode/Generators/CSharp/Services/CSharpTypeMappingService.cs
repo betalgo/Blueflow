@@ -1,3 +1,4 @@
+using Betalgo.Blueflow.OpenApiExtensions;
 using Microsoft.OpenApi.Models;
 
 namespace Betalgo.Blueflow.OpenAPIToCode.Generators.CSharp.Services;

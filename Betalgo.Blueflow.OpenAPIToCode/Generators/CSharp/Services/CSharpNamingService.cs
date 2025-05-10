@@ -74,7 +74,7 @@ public class CSharpNamingService : INamingService
         var identifier = new string(chars);
         // If identifier is a reserved keyword, append suffix instead of using @
         if (CSharpReservedKeywords.Contains(identifier))
-            identifier = identifier + ReservedKeywordSuffix;
+            identifier += ReservedKeywordSuffix;
         return identifier;
     }
 

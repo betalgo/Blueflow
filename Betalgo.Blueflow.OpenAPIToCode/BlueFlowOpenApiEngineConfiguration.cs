@@ -7,7 +7,7 @@ public class BlueFlowOpenApiEngineConfiguration
     /// </summary>
     public bool GenerateNestedClasses { get; set; } = true;
 
-    public string OpenApiDocumentationPath { get; set; }
+    public string? OpenApiDocumentationPath { get; set; }
     public string ProjectName { get; set; }
     public string OutputDirectory { get; set; }
 }

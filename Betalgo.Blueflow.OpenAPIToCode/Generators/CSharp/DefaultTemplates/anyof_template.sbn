@@ -1,37 +1,35 @@
 {{~ if summary ~}}
-///
-<summary>
-	{{ summary }}
-	///
-</summary>
+/// <summary>
+{{ summary }}
+/// </summary>
 {{~ end ~}}
 [JsonConverter(typeof({{ name }}Converter))]
 {{ modifiers }} class {{ name }}{{ base_types }}
 {
-{{~# 1. AUTO-GENERATED PROPERTIES -------------------------------- }}
-{{~ for property in properties ~}}
-{{ property }}
-{{~ end ~}}
+    {{~# 1. AUTO-GENERATED PROPERTIES -------------------------------- }}
+    {{~ for property in properties ~}}
+    {{ property }}
+    {{~ end ~}}
 
-{{~# 2. CONSTRUCTORS (one per branch) ---------------------------- }}
-{{~ for v in any_of_variants ~}}
-public {{ name }}({{ v.cs_type }} value)
-{
-{{~ for v2 in any_of_variants ~}}
-{{ v2.property_name }} = {{ v2 == v ? "value" : "null" }};
-{{~ end ~}}
-}
-{{~ end ~}}
+    {{~# 2. CONSTRUCTORS (one per branch) ---------------------------- }}
+    {{~ for v in any_of_variants ~}}
+    public {{ name }}({{ v.cs_type }} value)
+    {
+        {{~ for v2 in any_of_variants ~}}
+        {{ v2.property_name }} = {{ v2 == v ? "value" : "null" }};
+        {{~ end ~}}
+    }
+    {{~ end ~}}
 
-{{~# 3. IMPLICIT CONVERSIONS ------------------------------------ }}
-{{~ for v in any_of_variants ~}}
-public static implicit operator {{ name }}({{ v.cs_type }} value) => new(value);
-{{~ end ~}}
+    {{~# 3. IMPLICIT CONVERSIONS ------------------------------------ }}
+    {{~ for v in any_of_variants ~}}
+    public static implicit operator {{ name }}({{ v.cs_type }} value) => new(value);
+    {{~ end ~}}
 
-{{~# 4. NESTED CONVERTER ---------------------------------------- }}
-{{ converter }}
+    {{~# 4. NESTED CONVERTER ---------------------------------------- }}
+    {{ converter }}
 
-{{~ for nested_class in nested_classes ~}}
-{{ nested_class }}
-{{~ end ~}}
+    {{~ for nested_class in nested_classes ~}}
+    {{ nested_class }}
+    {{~ end ~}}
 }

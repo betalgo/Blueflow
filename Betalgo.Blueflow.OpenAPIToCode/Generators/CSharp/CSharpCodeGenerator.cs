@@ -1,3 +1,4 @@
+using Betalgo.Blueflow.OpenApiExtensions;
 using Betalgo.Blueflow.OpenAPIToCode.Generators.CSharp.Services;
 using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 using Betalgo.Blueflow.OpenAPIToCode.Utils;
@@ -231,20 +232,11 @@ public class CSharpCodeGenerator : ICodeGenerator
     public List<string> RenderBase()
     {
         var baseStrings = new List<string>();
+        var solutionTemplate = TemplateProviderService.GetSolutionTemplate();
+        baseStrings.Add(solutionTemplate);
 
-        // Render Solution template if exists
-        if (TemplateProviderService.TemplateExists("Solution"))
-        {
-            var solutionTemplate = TemplateProviderService.GetSolutionTemplate();
-            baseStrings.Add(solutionTemplate);
-        }
-
-        // Render Project template if exists
-        if (TemplateProviderService.TemplateExists("Project"))
-        {
-            var projectTemplate = TemplateProviderService.GetProjectTemplate();
-            baseStrings.Add(projectTemplate);
-        }
+        var projectTemplate = TemplateProviderService.GetProjectTemplate();
+        baseStrings.Add(projectTemplate);
 
         return baseStrings;
     }
@@ -304,20 +296,21 @@ public class CSharpCodeGenerator : ICodeGenerator
             PolyType.None => throw new ArgumentOutOfRangeException(nameof(polyType), polyType, null),
             _ => throw new ArgumentOutOfRangeException(nameof(polyType), polyType, null)
         };
+        var oneOfVariantsForRender = oneOfVariants.Any()?oneOfVariants.Select(v => new
+        {
+            cs_type = v.Type,
+            property_name = v.PropertyName,
+            use_write_string = v.UseWriteString,
+            json_token_type = v.JsonTokenType,
+            array_element_token_type = v.ArrayElementTokenType
+        }).ToList():null;
         var converterTemplate = Template.Parse(converterTemplateText);
         var converterResult = converterTemplate.Render(new
         {
             name = className,
             discriminator = "type",
-            one_of_variants = oneOfVariants.Select(v => new
-                {
-                    cs_type = v.Type,
-                    property_name = v.PropertyName,
-                    use_write_string = v.UseWriteString,
-                    json_token_type = v.JsonTokenType,
-                    array_element_token_type = v.ArrayElementTokenType
-                })
-                .ToList()
+            one_of_variants = oneOfVariantsForRender,
+            any_basic_type = oneOfVariants.Any(v => v.JsonTokenType != "StartObject")
         });
 
         var template = Template.Parse(templateText);
@@ -333,15 +326,8 @@ public class CSharpCodeGenerator : ICodeGenerator
             //parents = classDef.ParentIds,
             ido = schema.GetBlueFlowId(),
             converter = converterResult,
-            one_of_variants = oneOfVariants.Select(v => new
-                {
-                    cs_type = v.Type,
-                    property_name = v.PropertyName,
-                    use_write_string = v.UseWriteString,
-                    json_token_type = v.JsonTokenType,
-                    array_element_token_type = v.ArrayElementTokenType
-                })
-                .ToList()
+            one_of_variants = oneOfVariantsForRender,
+            any_basic_type = oneOfVariants.Any(v => v.JsonTokenType != "StartObject")
         });
         return result.Trim();
     }
@@ -408,13 +394,13 @@ public class CSharpCodeGenerator : ICodeGenerator
             name = className,
             discriminator = "type",
             any_of_variants = anyOfVariants.Select(v => new
-                {
-                    cs_type = v.Type,
-                    property_name = v.PropertyName,
-                    use_write_string = v.UseWriteString,
-                    json_token_type = v.JsonTokenType,
-                    array_element_token_type = v.ArrayElementTokenType
-                })
+            {
+                cs_type = v.Type,
+                property_name = v.PropertyName,
+                use_write_string = v.UseWriteString,
+                json_token_type = v.JsonTokenType,
+                array_element_token_type = v.ArrayElementTokenType
+            })
                 .ToList()
         });
 
@@ -432,13 +418,13 @@ public class CSharpCodeGenerator : ICodeGenerator
             ido = schema.GetBlueFlowId(),
             converter = converterResult,
             any_of_variants = anyOfVariants.Select(v => new
-                {
-                    cs_type = v.Type,
-                    property_name = v.PropertyName,
-                    use_write_string = v.UseWriteString,
-                    json_token_type = v.JsonTokenType,
-                    array_element_token_type = v.ArrayElementTokenType
-                })
+            {
+                cs_type = v.Type,
+                property_name = v.PropertyName,
+                use_write_string = v.UseWriteString,
+                json_token_type = v.JsonTokenType,
+                array_element_token_type = v.ArrayElementTokenType
+            })
                 .ToList()
         });
         return result.Trim();
@@ -498,11 +484,11 @@ public class CSharpCodeGenerator : ICodeGenerator
         var templateText = TemplateProviderService.GetConstructorTemplate();
 
         var constructorParameters = nonNullableProps.Select(p => new
-            {
-                type = TypeMappingService.MapType(p.Value),
-                name = NamingService.Convert(p.Value.GetSelfKey(), NamingPurpose.Parameter),
-                summary = DocumentationNormalizerService.Normalize(p.Value.Description)
-            })
+        {
+            type = TypeMappingService.MapType(p.Value),
+            name = NamingService.Convert(p.Value.GetSelfKey(), NamingPurpose.Parameter),
+            summary = DocumentationNormalizerService.Normalize(p.Value.Description)
+        })
             .ToList();
         var assignments = nonNullableProps.Select(p => $"{NamingService.Convert(p.Value.GetSelfKey(), NamingPurpose.Property)} = {NamingService.Convert(p.Value.GetSelfKey(), NamingPurpose.Parameter)};").ToList();
         var template = Template.Parse(templateText);

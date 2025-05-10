@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="cleanupcode.exe" />
     <None Remove="Generators\CSharp\Class.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\anyof_converter_template.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\anyof_template.sbn" />
@@ -70,6 +71,10 @@
     <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\file_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Betalgo.Blueflow.OpenApiExtensions\Betalgo.Blueflow.OpenApiExtensions.csproj" />
   </ItemGroup>
 
 </Project>

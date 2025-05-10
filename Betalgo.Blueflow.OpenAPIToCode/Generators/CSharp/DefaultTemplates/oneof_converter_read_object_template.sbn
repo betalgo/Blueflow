@@ -1,100 +1,89 @@
-///
-<summary>
-	/// Json converter for {{ name }} class
-	///
-</summary>
-private sealed class {{ name }}Converter : JsonConverter
-<{{ name }}>
-	{
-	public override {{ name }} Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions opts)
-	{
-	{{~ if discriminator ~}}
-	// 1) Handle basic primitive types upfront
-	switch (reader.TokenType)
-	{
-	{{~ for v in one_of_variants ~}}
-	{{~ if v.json_token_type != "StartArray" && v.json_token_type != "StartObject" ~}}
-	case JsonTokenType.{{ v.json_token_type }}:
-	return new ({{ if v.use_write_string }}reader.GetString()!{{ else }}JsonSerializer.Deserialize
-	<{{ v.cs_type }}>
-		(ref reader, opts)!{{ end }});
-		{{~ end ~}}
-		{{~ end ~}}
-		}
+/// <summary>
+/// Json converter for {{ name }} class
+/// </summary>
+private sealed class {{ name }}Converter : JsonConverter<{{ name }}>
+{
+    public override {{ name }} Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions opts)
+    {
+{{~ if discriminator ~}}
+        // 1) Handle basic primitive types upfront
+        switch (reader.TokenType)
+        {
+{{~ for v in one_of_variants ~}}
+{{~ if v.json_token_type != "StartArray" && v.json_token_type != "StartObject" ~}}
+            case JsonTokenType.{{ v.json_token_type }}:
+                return new ({{ if v.use_write_string }}reader.GetString()!{{ else }}JsonSerializer.Deserialize<{{ v.cs_type }}>(ref reader, opts)!{{ end }});
+{{~ end ~}}
+{{~ end ~}}
+        }
 
-		// 2) For objects, look for the discriminator
-		if (reader.TokenType == JsonTokenType.StartObject)
-		{
-		// Copy the reader so we can hunt for discriminator without consuming the real reader
-		var scan = reader;
-		string? discriminatorValue = null;
-		while (scan.Read())
-		{
-		if (scan.TokenType == JsonTokenType.PropertyName
-		&& scan.GetString() == "type"
-		&& scan.Read()
-		&& scan.TokenType == JsonTokenType.String)
-		{
-		discriminatorValue = scan.GetString();
-		break;
-		}
-		}
+        // 2) For objects, look for the discriminator
+        if (reader.TokenType == JsonTokenType.StartObject)
+        {
+            // Copy the reader so we can hunt for discriminator without consuming the real reader
+            var scan = reader;
+            string? discriminatorValue = null;
+            while (scan.Read())
+            {
+                if (scan.TokenType == JsonTokenType.PropertyName
+                    && scan.GetString() == "type"
+                    && scan.Read()
+                    && scan.TokenType == JsonTokenType.String)
+                {
+                    discriminatorValue = scan.GetString();
+                    break;
+                }
+            }
 
-		// Slurp into a JsonDocument now that we know which subtype to pick
-		using var doc = JsonDocument.ParseValue(ref reader);
-		var root = doc.RootElement;
+            // Slurp into a JsonDocument now that we know which subtype to pick
+            using var doc = JsonDocument.ParseValue(ref reader);
+            var root = doc.RootElement;
 
-		// Dispatch based on discriminator
-		return discriminatorValue switch
-		{
-		{{~ for v in one_of_variants ~}}
-		{{~ if v.discriminator_value ~}}
-		"{{ v.discriminator_value }}" => root.Deserialize
-		<{{ v.cs_type }}>
-			(opts)!,
-			{{~ end ~}}
-			{{~ end ~}}
-			_ => throw new JsonException($"Unknown {{ discriminator }}: {discriminatorValue}")
-			};
-			}
+            // Dispatch based on discriminator
+            return discriminatorValue switch
+            {
+{{~ for v in one_of_variants ~}}
+{{~ if v.discriminator_value ~}}
+                "{{ v.discriminator_value }}" => root.Deserialize<{{ v.cs_type }}>(opts)!,
+{{~ end ~}}
+{{~ end ~}}
+                _ => throw new JsonException($"Unknown {{ discriminator }}: {discriminatorValue}")
+            };
+        }
+        
+        // If we get here, we didn't match on a discriminator
+        throw new JsonException("Expected object with discriminator property");
+{{~ else ~}}
+        switch (reader.TokenType)
+        {
+{{~ for v in one_of_variants ~}}
+{{~ if v.json_token_type != "StartArray" ~}}
+            case JsonTokenType.{{ v.json_token_type }}:
+                return new ({{ if v.use_write_string }}reader.GetString()!{{ else }}JsonSerializer.Deserialize<{{ v.cs_type }}>(ref reader, opts)!{{ end }});
+{{~ end ~}}
+{{~ end ~}}
+            case JsonTokenType.StartArray:
+            {
+                var readerCopy = reader;
+                if (!readerCopy.Read())
+                    throw new JsonException();
+                switch (readerCopy.TokenType)
+                {
+{{~ for v in one_of_variants ~}}
+{{~ if v.json_token_type == "StartArray" && v.array_element_token_type != null ~}}
+                    case JsonTokenType.{{ v.array_element_token_type }}:
+                        return new (JsonSerializer.Deserialize<{{ v.cs_type }}>(ref reader, opts));
+{{~ end ~}}
+{{~ end ~}}
+                    default:
+                        throw new JsonException();
+                }
+            }
+            default:
+                throw new JsonException();
+        }
+{{~ end ~}}
+    }
 
-			// If we get here, we didn't match on a discriminator
-			throw new JsonException("Expected object with discriminator property");
-			{{~ else ~}}
-			switch (reader.TokenType)
-			{
-			{{~ for v in one_of_variants ~}}
-			{{~ if v.json_token_type != "StartArray" ~}}
-			case JsonTokenType.{{ v.json_token_type }}:
-			return new ({{ if v.use_write_string }}reader.GetString()!{{ else }}JsonSerializer.Deserialize
-			<{{ v.cs_type }}>
-				(ref reader, opts)!{{ end }});
-				{{~ end ~}}
-				{{~ end ~}}
-				case JsonTokenType.StartArray:
-				{
-				var readerCopy = reader;
-				if (!readerCopy.Read())
-				throw new JsonException();
-				switch (readerCopy.TokenType)
-				{
-				{{~ for v in one_of_variants ~}}
-				{{~ if v.json_token_type == "StartArray" && v.array_element_token_type != null ~}}
-				case JsonTokenType.{{ v.array_element_token_type }}:
-				return new (JsonSerializer.Deserialize
-				<{{ v.cs_type }}>
-					(ref reader, opts));
-					{{~ end ~}}
-					{{~ end ~}}
-					default:
-					throw new JsonException();
-					}
-					}
-					default:
-					throw new JsonException();
-					}
-					{{~ end ~}}
-					}
-
-					{{ json_write_method }}
-					}
+    {{ json_write_method }}
+}

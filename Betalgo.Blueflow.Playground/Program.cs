@@ -16,7 +16,6 @@ Console.WriteLine($"Output directory: {outputDir}");
 
 // Clean up any existing .cs files in the output directory
 CleanupOutputDirectory(outputDir);
-
 // --- Custom OpenAPI to Code Generation ---
 var openApiToCodeParser = new BlueFlowOpenApi(new CSharpCodeGenerator(new CSharpCodeGeneratorConfiguration
 {
@@ -33,6 +32,7 @@ var openApiToCodeParser = new BlueFlowOpenApi(new CSharpCodeGenerator(new CSharp
         OutputDirectory = outputDir
     }
 });
+await CreateSolutionAndProject(outputDir, "TestAPI");
 openApiToCodeParser.Start();
 
 
@@ -45,7 +45,14 @@ static async Task CreateSolutionAndProject(string outputDir, string projectNames
     Console.WriteLine("\nCreating solution and project for generated code...");
 
     // Use the engine's method to generate base files (solution, project, etc.)
-    var engine = new BlueFlowOpenApiEngine(new CSharpCodeGenerator());
+    var engine = new BlueFlowOpenApiEngine(new CSharpCodeGenerator(new CSharpCodeGeneratorConfiguration
+    {
+        ClassNameSuffix = "Model"
+    }), new()
+    {
+        ProjectName = "TestAPI",
+        OutputDirectory = outputDir,
+    });
     await engine.GenerateBaseFilesIfNotExistAsync(outputDir, projectNamespace.Split('.')[0]);
 
     var projectName = projectNamespace.Split('.')[0];

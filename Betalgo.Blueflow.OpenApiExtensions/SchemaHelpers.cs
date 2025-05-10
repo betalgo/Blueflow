@@ -1,9 +1,8 @@
-using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
 
-namespace Betalgo.Blueflow.OpenAPIToCode;
+namespace Betalgo.Blueflow.OpenApiExtensions;
 
 public static class SchemaHelpers
 {
@@ -28,7 +27,7 @@ public static class SchemaHelpers
         return schema.AnyOf.Any();
     }
 
-    public static bool IsReference(this OpenApiSchema schema)
+    public static bool HasReference(this OpenApiSchema schema)
     {
         return schema.Reference != null;
     }
@@ -72,82 +71,90 @@ public static class SchemaHelpers
     {
         return schema.IsOneOfProperty() || schema.IsAllOfProperty() || schema.IsAnyOfProperty();
     }
-
-    public static void SetBlueflowId(this OpenApiSchema schema, string? _)
+    public static void SetBlueflowExtension(this OpenApiSchema schema, string key, IOpenApiExtension? value)
     {
-        schema.Extensions ??= new Dictionary<string, IOpenApiExtension>();
-        schema.Extensions["x-blueflow-id"] = new OpenApiString(Guid.NewGuid().ToString());
+        if (value == null)
+        {
+            if (schema.Extensions != null && schema.Extensions.ContainsKey($"x-blueflow-{key}"))
+            {
+                schema.Extensions.Remove($"x-blueflow-{key}");
+            }
+        }
+        else
+        {
+            schema.Extensions ??= new Dictionary<string, IOpenApiExtension>();
+            schema.Extensions[$"x-blueflow-{key}"] = value;
+        }
+
+    }
+    public static T? GetBlueflowExtension<T>(this OpenApiSchema schema, string key) where T : IOpenApiAny
+    {
+        if (schema.Extensions != null && schema.Extensions.TryGetValue($"x-blueflow-{key}", out var ext) && ext is T value)
+        {
+            return value;
+        }
+        return default;
+    }
+
+    public static void SetBlueflowId(this OpenApiSchema schema)
+    {
+        schema.SetBlueflowExtension("id", new OpenApiString(Guid.NewGuid().ToString()));
     }
 
     public static void SetAsMainComponent(this OpenApiSchema schema)
     {
-        schema.Extensions ??= new Dictionary<string, IOpenApiExtension>();
-        schema.Extensions["x-blueflow-main"] = new OpenApiBoolean(true);
+        schema.SetBlueflowExtension("main", new OpenApiBoolean(true));
     }
 
     public static bool IsMainComponent(this OpenApiSchema schema)
     {
-        return schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-main", out var ext) && ext is OpenApiBoolean;
+        return schema.GetBlueflowExtension<OpenApiBoolean>("main")?.Value == true;
     }
 
     public static void SetBlueflowName(this OpenApiSchema schema, string? name)
     {
-        schema.Extensions ??= new Dictionary<string, IOpenApiExtension>();
-        schema.Extensions["x-blueflow-name"] = new OpenApiString(name);
+        schema.SetBlueflowExtension("name", new OpenApiString(name));
     }
 
     public static void SetItemOfArray(this OpenApiSchema schema)
     {
-        schema.Extensions ??= new Dictionary<string, IOpenApiExtension>();
-        schema.Extensions["x-blueflow-is-item-of-array"] = new OpenApiBoolean(true);
+        schema.SetBlueflowExtension("is-item-of-array", new OpenApiBoolean(true));
     }
 
     public static void SetBlueflowPropertyType(this OpenApiSchema schema, string? name)
     {
-        schema.Extensions ??= new Dictionary<string, IOpenApiExtension>();
-        schema.Extensions["x-blueflow-poly-type"] = new OpenApiString(name);
+        schema.SetBlueflowExtension("poly-type", new OpenApiString(name));
     }
 
     public static bool IsItemOfArray(this OpenApiSchema schema)
     {
-        return schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-is-item-of-array", out var ext) && ext is OpenApiBoolean;
+        return schema.GetBlueflowExtension<OpenApiBoolean>("is-item-of-array")?.Value == true;
     }
 
     public static string? GetBlueflowName(this OpenApiSchema schema)
     {
-        if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-name", out var ext) && ext is OpenApiString name)
-        {
-            return name.Value;
-        }
-
-        return null;
+        return schema.GetBlueflowExtension<OpenApiString>("name")?.Value;
     }
 
     public static string? GetBlueflowPropertyType(this OpenApiSchema schema)
     {
-        if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-poly-type", out var ext) && ext is OpenApiString value)
-        {
-            return value.Value;
-        }
-
-        return null;
+        return schema.GetBlueflowExtension<OpenApiString>("poly-type")?.Value;
+    }
+    public static Guid GetBlueFlowId(this OpenApiSchema schema)
+    {
+        return Guid.Parse(schema.GetBlueflowExtension<OpenApiString>("id")?.Value?? Guid.NewGuid().ToString());
     }
 
     public static void SetBlueflowSelfKey(this OpenApiSchema schema, string? key)
     {
         if (string.IsNullOrEmpty(key)) return;
-        schema.Extensions ??= new Dictionary<string, IOpenApiExtension>();
-        schema.Extensions["x-blueflow-self"] = new OpenApiString(key);
+
+        schema.SetBlueflowExtension("self", new OpenApiString(key));
     }
 
     public static string? GetSelfKey(this OpenApiSchema schema)
     {
-        if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-self", out var ext) && ext is OpenApiString self)
-        {
-            return self.Value;
-        }
-
-        return null;
+        return schema.GetBlueflowExtension<OpenApiString>("self")?.Value;
     }
 
     public static string? GetBaseType(this OpenApiSchema schema)
@@ -165,28 +172,6 @@ public static class SchemaHelpers
         return null;
     }
 
-    public static Guid GetBlueFlowId(this OpenApiSchema schema)
-    {
-        if (schema.Extensions != null && schema.Extensions.TryGetValue("x-blueflow-id", out var ext) && ext is OpenApiString idStr && Guid.TryParse(idStr.Value, out var parsedId))
-        {
-            return parsedId;
-        }
-
-        return Guid.NewGuid();
-        //    throw new InvalidOperationException("The schema does not contain a valid 'x-blueflow-id' extension.");
-    }
-
-    public static List<EnumValueDefinition> GetEnumDefinitions(this IList<IOpenApiAny> schema)
-    {
-        return schema.OfType<OpenApiString>()
-            .Select(e => new EnumValueDefinition
-            {
-                Name = e.Value ?? string.Empty,
-                JsonName = e.Value ?? string.Empty
-            })
-            .ToList();
-    }
-
     public static IEnumerable<OpenApiSchema> FilterByObjectsWithoutReference(this IEnumerable<OpenApiSchema> schema)
     {
         return schema.Where(r => r.IsObjectWithoutReference() || r.IsEnum());
@@ -195,11 +180,6 @@ public static class SchemaHelpers
     public static IEnumerable<OpenApiSchema> ExtractArrayObjectsWithoutReference(this IEnumerable<OpenApiSchema> schema)
     {
         return schema.Where(r => r.Type == "array" && r.Items.IsObjectWithoutReference()).Select(r => r.Items);
-    }
-
-    public static IEnumerable<OpenApiSchema> ExtractArrayObjectsWithoutReference(this IDictionary<string, OpenApiSchema> schema)
-    {
-        return schema.Where(r => r.Value.Type == "array" && r.Value.Items.IsObjectWithoutReference()).Select(r => r.Value.Items);
     }
 
     public static IEnumerable<KeyValuePair<string, OpenApiSchema>> FilterByObjectsWithoutReference(this IDictionary<string, OpenApiSchema> schema)
@@ -277,6 +257,7 @@ public static class SchemaHelpers
         schema.OneOf.Clear();
         schema.AnyOf.Clear();
     }
+
 
     // Checks if an allOf schema has exactly two items: one is a reference and the other is just nullable:true
     public static bool IsNullableReference(this OpenApiSchema schema)
