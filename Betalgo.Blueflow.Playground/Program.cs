@@ -1,4 +1,3 @@
-using System.Text;
 using Betalgo.Blueflow.OpenAPIToCode;
 using Betalgo.Blueflow.OpenAPIToCode.Generators.CSharp;
 using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
@@ -6,27 +5,27 @@ using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 Console.WriteLine("Betalgo.Blueflow.OpenAPIToCode - Test Client");
 
 
-    // Use the simple OpenAPI file from the project directory
-    var openApiFile = Path.Combine(Directory.GetCurrentDirectory(), "openapi.yaml");
-    Console.WriteLine($"Using OpenAPI file: {openApiFile}");
+// Use the simple OpenAPI file from the project directory
+var openApiFile = Path.Combine(Directory.GetCurrentDirectory(), "openapi.yaml");
+Console.WriteLine($"Using OpenAPI file: {openApiFile}");
 
-    // Setup output directory
-    var outputDir = Path.Combine(AppContext.BaseDirectory, "output");
-    Directory.CreateDirectory(outputDir);
-    Console.WriteLine($"Output directory: {outputDir}");
+// Setup output directory
+var outputDir = Path.Combine(AppContext.BaseDirectory, "output");
+Directory.CreateDirectory(outputDir);
+Console.WriteLine($"Output directory: {outputDir}");
 
-    // Clean up any existing .cs files in the output directory
-    CleanupOutputDirectory(outputDir);
+// Clean up any existing .cs files in the output directory
+CleanupOutputDirectory(outputDir);
 
 // --- Custom OpenAPI to Code Generation ---
-var openApiToCodeParser = new BlueFlowOpenApi(new CSharpCodeGenerator(new CSharpCodeGeneratorConfiguration()
+var openApiToCodeParser = new BlueFlowOpenApi(new CSharpCodeGenerator(new CSharpCodeGeneratorConfiguration
 {
     ClassNameSuffix = "Model"
-}), new BlueFlowOpenApiConfiguration()
+}), new()
 {
     ProjectName = "TestAPI",
     OutputDirectory = outputDir,
-    ParserConfiguration = new BlueFlowOpenApiEngineConfiguration()
+    ParserConfiguration = new()
     {
         OpenApiDocumentationPath = openApiFile,
         ProjectName = "TestAPI",
@@ -86,60 +85,60 @@ openApiToCodeParser.Start();
 //}
 
 Console.WriteLine("\nPress any key to exit...");
-    Console.ReadKey();
+Console.ReadKey();
 
 
-    static async Task CreateSolutionAndProject(string outputDir, string projectNamespace)
+static async Task CreateSolutionAndProject(string outputDir, string projectNamespace)
+{
+    Console.WriteLine("\nCreating solution and project for generated code...");
+
+    // Use the engine's method to generate base files (solution, project, etc.)
+    var engine = new BlueFlowOpenApiEngine(new CSharpCodeGenerator());
+    await engine.GenerateBaseFilesIfNotExistAsync(outputDir, projectNamespace.Split('.')[0]);
+
+    var projectName = projectNamespace.Split('.')[0];
+    var solutionFile = Path.Combine(outputDir, $"{projectName}.sln");
+    var projectFile = Path.Combine(outputDir, $"{projectName}.csproj");
+
+    Console.WriteLine($"Solution created at: {solutionFile}");
+    Console.WriteLine($"Project created at: {projectFile}");
+}
+
+static void CleanupOutputDirectory(string outputDir)
+{
+    Console.WriteLine("Cleaning up existing files in output directory...");
+
+    // Delete all .cs files in the output directory and its subdirectories
+    var existingFiles = Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories);
+    foreach (var file in existingFiles)
     {
-        Console.WriteLine("\nCreating solution and project for generated code...");
-
-        // Use the engine's method to generate base files (solution, project, etc.)
-        var engine = new BlueFlowOpenApiEngine(new CSharpCodeGenerator());
-        await engine.GenerateBaseFilesIfNotExistAsync(outputDir, projectNamespace.Split('.')[0]);
-
-        var projectName = projectNamespace.Split('.')[0];
-        var solutionFile = Path.Combine(outputDir, $"{projectName}.sln");
-        var projectFile = Path.Combine(outputDir, $"{projectName}.csproj");
-
-        Console.WriteLine($"Solution created at: {solutionFile}");
-        Console.WriteLine($"Project created at: {projectFile}");
-    }
-
-    static void CleanupOutputDirectory(string outputDir)
-    {
-        Console.WriteLine("Cleaning up existing files in output directory...");
-
-        // Delete all .cs files in the output directory and its subdirectories
-        var existingFiles = Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories);
-        foreach (var file in existingFiles)
+        try
         {
-            try
-            {
-                File.Delete(file);
-                Console.WriteLine($"  Deleted: {Path.GetRelativePath(outputDir, file)}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  Warning: Could not delete {Path.GetRelativePath(outputDir, file)}: {ex.Message}");
-            }
+            File.Delete(file);
+            Console.WriteLine($"  Deleted: {Path.GetRelativePath(outputDir, file)}");
         }
-
-        // Delete any existing solution/project files
-        //var solutionFiles = Directory.GetFiles(outputDir, "*.sln", SearchOption.TopDirectoryOnly);
-        //var projectFiles = Directory.GetFiles(outputDir, "*.csproj", SearchOption.TopDirectoryOnly);
-
-        //foreach (var file in solutionFiles.Concat(projectFiles))
-        //{
-        //    try
-        //    {
-        //        File.Delete(file);
-        //        Console.WriteLine($"  Deleted: {Path.GetRelativePath(outputDir, file)}");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"  Warning: Could not delete {Path.GetRelativePath(outputDir, file)}: {ex.Message}");
-        //    }
-        //}
-
-        Console.WriteLine("Cleanup completed.");
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  Warning: Could not delete {Path.GetRelativePath(outputDir, file)}: {ex.Message}");
+        }
     }
+
+    // Delete any existing solution/project files
+    //var solutionFiles = Directory.GetFiles(outputDir, "*.sln", SearchOption.TopDirectoryOnly);
+    //var projectFiles = Directory.GetFiles(outputDir, "*.csproj", SearchOption.TopDirectoryOnly);
+
+    //foreach (var file in solutionFiles.Concat(projectFiles))
+    //{
+    //    try
+    //    {
+    //        File.Delete(file);
+    //        Console.WriteLine($"  Deleted: {Path.GetRelativePath(outputDir, file)}");
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Console.WriteLine($"  Warning: Could not delete {Path.GetRelativePath(outputDir, file)}: {ex.Message}");
+    //    }
+    //}
+
+    Console.WriteLine("Cleanup completed.");
+}

@@ -42,22 +42,22 @@ public class CSharpTypeMappingService : ITypeMappingService
 
         if (openApiType.IsCollection)
         {
-            return $"List<{MapType(openApiType.SubTypes.FirstOrDefault()!, openApiType.SubTypes.FirstOrDefault()?.IsNullable??false)}>";
+            return $"List<{MapType(openApiType.SubTypes.FirstOrDefault()!, openApiType.SubTypes.FirstOrDefault()?.IsNullable ?? false)}>";
         }
 
         var type = TypeMap.GetValueOrDefault(openApiType.Type.ToLowerInvariant(), openApiType.Type);
         if (isNullable && type != "string" && type != "object" && type != "byte[]" && type != "Uri")
             type += "?";
-        
+
 
         return type;
     }
-    
+
     public string MapType(OpenApiSchema schema)
     {
         if (string.IsNullOrWhiteSpace(schema?.Type))
             return "object";
-        
+
         string? type;
         if (schema.IsArray())
         {
@@ -73,18 +73,18 @@ public class CSharpTypeMappingService : ITypeMappingService
             {
                 type = TypeMap.GetValueOrDefault(schema.Type.ToLowerInvariant(), schema.Type);
             }
+
             if (type == "string" && schema.Enum.Any())
             {
                 type = schema.GetBlueflowName();
             }
         }
 
-       
 
         //if (schema.Nullable && type != "string" && type != "object" && type != "byte[]" && type != "Uri")
         if (schema.Nullable)
             type += "?";
-        
+
 
         return type;
     }

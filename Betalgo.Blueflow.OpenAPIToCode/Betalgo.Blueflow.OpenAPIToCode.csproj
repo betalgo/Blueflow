@@ -24,10 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="BlueFlowOpenApiEngine - Copy.cs.back" />
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\anyof_converter_template.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>

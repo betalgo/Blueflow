@@ -1,19 +1,18 @@
-namespace Betalgo.Blueflow.OpenAPIToCode.Generators.Models
+namespace Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
+
+/// <summary>
+///     Specifies the purpose/context for naming conversion.
+/// </summary>
+public enum NamingPurpose
 {
-    /// <summary>
-    /// Specifies the purpose/context for naming conversion.
-    /// </summary>
-    public enum NamingPurpose
-    {
-        Class,
-        OneOfClass,
-        AnyOfClass,
-        AllOfClass,
-        Property,
-        AsProperty,
-        Enum,
-        EnumMember,
-        Method,
-        Parameter
-    }
+    Class,
+    OneOfClass,
+    AnyOfClass,
+    AllOfClass,
+    Property,
+    AsProperty,
+    Enum,
+    EnumMember,
+    Method,
+    Parameter
 }

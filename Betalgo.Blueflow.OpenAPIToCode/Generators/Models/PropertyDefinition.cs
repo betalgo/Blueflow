@@ -12,6 +12,6 @@ public class PropertyDefinition
     public bool IsCollection { get; set; } = false;
     public string? Summary { get; set; }
     public string JsonName { get; set; } = string.Empty;
-    public Guid Id  { get; set; }
-    public List<PropertyDefinition> SubTypes { get; set; } = new List<PropertyDefinition>();
+    public Guid Id { get; set; }
+    public List<PropertyDefinition> SubTypes { get; set; } = new();
 }

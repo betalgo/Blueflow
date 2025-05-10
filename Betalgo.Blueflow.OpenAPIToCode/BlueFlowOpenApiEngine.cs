@@ -3,16 +3,22 @@ using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
+using Microsoft.OpenApi.Writers;
+using Scriban;
 
 namespace Betalgo.Blueflow.OpenAPIToCode;
 
 public class BlueFlowOpenApiEngine
 {
+    //private readonly Dictionary<Guid, OpenApiSchema> _definitionsSchema = new();
+    private static int count = 0;
+
+    private static Dictionary<Guid, string> _blueflowIdNameDictionary = new();
+    private static bool _blueflowIdNameDictionaryLoaded = false;
     private readonly ICodeGenerator _codeGenerator;
     private readonly BlueFlowOpenApiEngineConfiguration _configuration;
     public readonly OpenApiDocument _openApiDocument;
-    //private readonly Dictionary<Guid, OpenApiSchema> _definitionsSchema = new();
-    private static int count = 0;
+
     public BlueFlowOpenApiEngine(ICodeGenerator codeGenerator, BlueFlowOpenApiEngineConfiguration configuration)
     {
         _codeGenerator = codeGenerator;
@@ -21,8 +27,7 @@ public class BlueFlowOpenApiEngine
         _openApiDocument = new OpenApiStreamReader().Read(stream, out var diagnostic);
     }
 
-    public BlueFlowOpenApiEngine(ICodeGenerator codeGenerator)
-        : this(codeGenerator, new BlueFlowOpenApiEngineConfiguration())
+    public BlueFlowOpenApiEngine(ICodeGenerator codeGenerator) : this(codeGenerator, new())
     {
     }
 
@@ -41,22 +46,26 @@ public class BlueFlowOpenApiEngine
         {
             return;
         }
+
         var fileDef = new FileDefinition
         {
             Namespace = _configuration.ProjectName,
             Content = [_codeGenerator.Render(schema)],
-            Usings = [
+            Usings =
+            [
                 "System",
                 "System.Text.Json.Serialization",
                 "System.Collections",
                 "System.Collections.Generic",
-                $"System.Text.Json"]
+                $"System.Text.Json"
+            ]
         };
         var classesDir = _configuration.OutputDirectory;
         var code = _codeGenerator.RenderFile(fileDef);
         var filePath = GetUniqueFilePath(classesDir, $"{schema.GetBlueflowName() ?? schema.GetSelfKey()}.cs");
         File.WriteAllText(filePath, code);
     }
+
     public void Start2()
     {
         GenerateBaseFilesIfNotExistAsync(_configuration.OutputDirectory, _configuration.ProjectName);
@@ -82,37 +91,42 @@ public class BlueFlowOpenApiEngine
         {
             name = schema.Title ?? schema.GetBaseType() ?? key;
         }
+
         if (schema.IsArray())
         {
             foreach (var openApiSchema in schema.Items.Properties)
             {
                 openApiSchema.Value.SetItemOfArray();
             }
+
             foreach (var openApiSchema in schema.Items.AnyOf)
             {
                 schema.Items.SetItemOfArray();
                 openApiSchema.SetItemOfArray();
             }
+
             foreach (var openApiSchema in schema.Items.OneOf)
             {
                 schema.Items.SetItemOfArray();
                 openApiSchema.SetItemOfArray();
             }
+
             foreach (var openApiSchema in schema.Items.AllOf)
             {
                 schema.Items.SetItemOfArray();
                 openApiSchema.SetItemOfArray();
             }
         }
+
         if (schema.IsItemOfArray() && schema.Reference == null)
         {
             name += "Item";
         }
+
         if (schema.IsObject())
         {
             if (schema.IsOneOf())
             {
-
                 schema.SetBlueflowName(_codeGenerator.NamingService.Convert(name, NamingPurpose.OneOfClass));
                 foreach (var openApiSchema in schema.OneOf)
                 {
@@ -142,7 +156,6 @@ public class BlueFlowOpenApiEngine
         }
         else if (schema.IsEnum())
         {
-
             schema.SetBlueflowName(_codeGenerator.NamingService.Convert(name, NamingPurpose.Enum));
         }
     }
@@ -154,16 +167,16 @@ public class BlueFlowOpenApiEngine
         {
             schema.SetAsMainComponent();
         }
+
         Action<OpenApiSchema, string?>[] rules =
-                [
-                    SchemaHelpers.SetBlueflowId,
+        [
+            SchemaHelpers.SetBlueflowId,
             SchemaHelpers.SetBlueflowSelfKey,
             (schema, key) => schema.ConvertPolyToEnumIfApplicable(),
             (schema, key) => schema.ConvertNullableReferenceIfApplicable(),
             (schema, key) => ConvertTypeIfItIsPoly(schema, key, "object"),
-           FixMissingTypes
-
-                ];
+            FixMissingTypes
+        ];
 
         foreach (var (name, schema) in _openApiDocument.Components.Schemas)
         {
@@ -172,10 +185,7 @@ public class BlueFlowOpenApiEngine
     }
 
 
-
-    private void ProcessSchemaRecursively(OpenApiSchema? schema,
-        string key,
-        params Action<OpenApiSchema, string?>[] rules)
+    private void ProcessSchemaRecursively(OpenApiSchema? schema, string key, params Action<OpenApiSchema, string?>[] rules)
     {
         if (schema == null) return;
 
@@ -200,7 +210,7 @@ public class BlueFlowOpenApiEngine
         var extension = Path.GetExtension(originalPath);
         var newPath = Path.Combine(directory ?? string.Empty, $"{filename}_v2{extension}");
         using var outputStream = File.Create(newPath);
-        var writer = new Microsoft.OpenApi.Writers.OpenApiYamlWriter(new StreamWriter(outputStream));
+        var writer = new OpenApiYamlWriter(new StreamWriter(outputStream));
         _openApiDocument.SerializeAsV3(writer);
         writer.Flush();
     }
@@ -209,18 +219,19 @@ public class BlueFlowOpenApiEngine
     // Returns a unique file path by appending _1, _2, etc. if needed
     private string GetUniqueFilePath(string directory, string baseFileName)
     {
-        string filePath = Path.Combine(directory, baseFileName);
+        var filePath = Path.Combine(directory, baseFileName);
         if (!File.Exists(filePath))
             return filePath;
-        string name = Path.GetFileNameWithoutExtension(baseFileName);
-        string ext = Path.GetExtension(baseFileName);
-        int counter = 1;
+        var name = Path.GetFileNameWithoutExtension(baseFileName);
+        var ext = Path.GetExtension(baseFileName);
+        var counter = 1;
         string newFilePath;
         do
         {
             newFilePath = Path.Combine(directory, $"{name}_{counter}{ext}");
             counter++;
         } while (File.Exists(newFilePath));
+
         return newFilePath;
     }
 
@@ -244,7 +255,7 @@ public class BlueFlowOpenApiEngine
         var baseFiles = _codeGenerator.RenderBase();
         var baseFileNames = new[] { $"{projectName}.sln", $"{projectName}.csproj" };
 
-        for (int i = 0; i < baseFiles.Count && i < baseFileNames.Length; i++)
+        for (var i = 0; i < baseFiles.Count && i < baseFileNames.Length; i++)
         {
             var filePath = Path.Combine(outputDirectory, baseFileNames[i]);
             if (!File.Exists(filePath))
@@ -253,19 +264,20 @@ public class BlueFlowOpenApiEngine
                 var content = baseFiles[i];
                 if (baseFileNames[i].EndsWith(".sln"))
                 {
-                    var template = Scriban.Template.Parse(content);
+                    var template = Template.Parse(content);
                     content = template.Render(new { solution_guid = Guid.NewGuid().ToString("B").ToUpper(), project_name = projectName, project_guid = Guid.NewGuid().ToString("B").ToUpper() });
                 }
                 else if (baseFileNames[i].EndsWith(".csproj"))
                 {
-                    var template = Scriban.Template.Parse(content);
+                    var template = Template.Parse(content);
                     content = template.Render(new { target_framework = "net9.0" });
                 }
                 else if (baseFileNames[i].EndsWith(".cs"))
                 {
-                    var template = Scriban.Template.Parse(content);
+                    var template = Template.Parse(content);
                     content = template.Render(new { project_namespace = projectName });
                 }
+
                 await File.WriteAllTextAsync(filePath, content);
             }
         }
@@ -278,6 +290,7 @@ public class BlueFlowOpenApiEngine
             schema.Type = to;
         }
     }
+
     private static void FixMissingTypes(OpenApiSchema schema, string? key)
     {
         if (schema.Type == null && schema.Properties != null && schema.Properties.Any())
@@ -287,7 +300,7 @@ public class BlueFlowOpenApiEngine
     }
 
     /// <summary>
-    /// Returns a dictionary mapping x-blueflow-id GUIDs to their schema/property/enum names from the OpenAPI file.
+    ///     Returns a dictionary mapping x-blueflow-id GUIDs to their schema/property/enum names from the OpenAPI file.
     /// </summary>
     public Dictionary<string, string> GetBlueflowIdDictionary(string openApiFilePath)
     {
@@ -340,27 +353,23 @@ public class BlueFlowOpenApiEngine
                 }
             }
         }
+
         return result;
     }
 
-    private static Dictionary<Guid, string> _blueflowIdNameDictionary = new();
-    private static bool _blueflowIdNameDictionaryLoaded = false;
-
     /// <summary>
-    /// Loads the BlueflowId-Name dictionary from the OpenAPI file (in memory only).
+    ///     Loads the BlueflowId-Name dictionary from the OpenAPI file (in memory only).
     /// </summary>
     public void LoadBlueflowIdNameDictionary(string openApiFilePath)
     {
         if (_blueflowIdNameDictionaryLoaded) return;
-        var dict = GetBlueflowIdDictionary(openApiFilePath)
-            .Where(kvp => Guid.TryParse(kvp.Key, out _))
-            .ToDictionary(kvp => Guid.Parse(kvp.Key), kvp => kvp.Value);
+        var dict = GetBlueflowIdDictionary(openApiFilePath).Where(kvp => Guid.TryParse(kvp.Key, out _)).ToDictionary(kvp => Guid.Parse(kvp.Key), kvp => kvp.Value);
         _blueflowIdNameDictionary = dict;
         _blueflowIdNameDictionaryLoaded = true;
     }
 
     /// <summary>
-    /// Updates the name for a given BlueflowId in the dictionary (in memory only).
+    ///     Updates the name for a given BlueflowId in the dictionary (in memory only).
     /// </summary>
     public void UpdateBlueflowIdName(Guid id, string newName)
     {
@@ -368,7 +377,7 @@ public class BlueFlowOpenApiEngine
     }
 
     /// <summary>
-    /// Gets the canonical name for a given BlueflowId from the dictionary.
+    ///     Gets the canonical name for a given BlueflowId from the dictionary.
     /// </summary>
     public string GetNameByBlueflowId(Guid id)
     {
@@ -378,7 +387,7 @@ public class BlueFlowOpenApiEngine
     }
 
     /// <summary>
-    /// Gets an OpenApiSchema by its reference.
+    ///     Gets an OpenApiSchema by its reference.
     /// </summary>
     private OpenApiSchema? GetSchemaByReference(OpenApiReference reference, OpenApiDocument? document = null)
     {
@@ -388,7 +397,7 @@ public class BlueFlowOpenApiEngine
         // For schema references, extract the name from the reference path
         if (reference.Type == ReferenceType.Schema)
         {
-            string schemaName = reference.Id;
+            var schemaName = reference.Id;
             if (document.Components.Schemas.TryGetValue(schemaName, out var schema))
                 return schema;
         }
@@ -401,7 +410,7 @@ public class BlueFlowOpenApiEngine
     // When creating ClassDefinition or PropertyDefinition, set Name = GetNameByBlueflowId(id)
 
     /// <summary>
-    /// Determines the TypeId for a property that references another type.
+    ///     Determines the TypeId for a property that references another type.
     /// </summary>
     private Guid? GetTypeIdForProperty(OpenApiSchema prop, string propertyName)
     {
@@ -409,9 +418,7 @@ public class BlueFlowOpenApiEngine
         if (!string.IsNullOrEmpty(prop.Reference?.Id))
         {
             // Look for the reference in our dictionary by name
-            var entries = _blueflowIdNameDictionary
-                .Where(kvp => kvp.Value == prop.Reference.Id)
-                .ToList();
+            var entries = _blueflowIdNameDictionary.Where(kvp => kvp.Value == prop.Reference.Id).ToList();
 
             if (entries.Any())
             {
@@ -422,9 +429,7 @@ public class BlueFlowOpenApiEngine
         else if (prop.Type == "array" && prop.Items?.Reference != null && !string.IsNullOrEmpty(prop.Items.Reference.Id))
         {
             // Look for the items reference in our dictionary by name
-            var entries = _blueflowIdNameDictionary
-                .Where(kvp => kvp.Value == prop.Items.Reference.Id)
-                .ToList();
+            var entries = _blueflowIdNameDictionary.Where(kvp => kvp.Value == prop.Items.Reference.Id).ToList();
 
             if (entries.Any())
             {
@@ -435,10 +440,7 @@ public class BlueFlowOpenApiEngine
         else if (prop.Enum != null && prop.Enum.Count > 0 && (prop.Type == "string" || prop.Type == null))
         {
             // For enums, use the enum's BlueflowId that was assigned earlier
-            if (prop.Extensions != null &&
-                prop.Extensions.TryGetValue("x-blueflow-id", out var enumExt) &&
-                enumExt is OpenApiString enumIdStr &&
-                Guid.TryParse(enumIdStr.Value, out var enumId))
+            if (prop.Extensions != null && prop.Extensions.TryGetValue("x-blueflow-id", out var enumExt) && enumExt is OpenApiString enumIdStr && Guid.TryParse(enumIdStr.Value, out var enumId))
             {
                 return enumId;
             }

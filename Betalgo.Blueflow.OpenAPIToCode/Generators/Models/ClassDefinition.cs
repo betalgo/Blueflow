@@ -1,5 +1,3 @@
-using Betalgo.Blueflow.OpenAPIToCode.Generators.CSharp;
-
 namespace Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 
 /// <summary>

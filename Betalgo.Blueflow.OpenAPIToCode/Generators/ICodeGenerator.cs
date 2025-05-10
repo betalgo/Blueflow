@@ -1,5 +1,5 @@
-using Betalgo.Blueflow.OpenAPIToCode.Utils;
 using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
+using Betalgo.Blueflow.OpenAPIToCode.Utils;
 using Microsoft.OpenApi.Models;
 
 namespace Betalgo.Blueflow.OpenAPIToCode.Generators;
@@ -41,6 +41,7 @@ public interface ICodeGenerator
     /// <param name="classDefinition">The class definition containing all necessary information for code generation.</param>
     /// <returns>The generated class code as a string.</returns>
     string RenderClass(OpenApiSchema classDefinition, string? templateText);
+
     string Render(OpenApiSchema classDefinition);
 
     /// <summary>
@@ -51,7 +52,7 @@ public interface ICodeGenerator
     string RenderProperty(OpenApiSchema propertyDefinition, string? templateText);
 
     /// <summary>
-    /// Renders a string enum class based on the provided enum definition and returns the generated code as a string.
+    ///     Renders a string enum class based on the provided enum definition and returns the generated code as a string.
     /// </summary>
     /// <param name="enumDefinition">The enum definition representing the string enum.</param>
     /// <returns>The generated string enum class code as a string.</returns>

@@ -1,10 +1,9 @@
-namespace Betalgo.Blueflow.OpenAPIToCode.Generators.Models
+namespace Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
+
+/// <summary>
+///     Supported code languages for code generation.
+/// </summary>
+public enum CodeLanguage
 {
-    /// <summary>
-    /// Supported code languages for code generation.
-    /// </summary>
-    public enum CodeLanguage
-    {
-        CSharp
-    }
+    CSharp
 }

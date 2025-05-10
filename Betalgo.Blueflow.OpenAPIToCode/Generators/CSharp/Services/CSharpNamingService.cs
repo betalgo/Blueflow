@@ -1,4 +1,3 @@
-using System.Globalization;
 using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 using Betalgo.Blueflow.OpenAPIToCode.Utils;
 
@@ -49,21 +48,6 @@ public class CSharpNamingService : INamingService
         return ToValidCSharpIdentifier(result);
     }
 
-    private static string ToValidCSharpIdentifier(string input)
-    {
-        if (string.IsNullOrEmpty(input)) return input;
-        // If the first character is not a letter or underscore, prepend underscore
-        if (!char.IsLetter(input[0]) && input[0] != '_')
-            input = "_" + input;
-        // Replace any remaining invalid characters with underscores
-        var chars = input.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray();
-        var identifier = new string(chars);
-        // If identifier is a reserved keyword, append suffix instead of using @
-        if (CSharpReservedKeywords.Contains(identifier))
-            identifier = identifier + ReservedKeywordSuffix;
-        return identifier;
-    }
-
     public string ToPascalCase(string input)
     {
         if (string.IsNullOrWhiteSpace(input)) return string.Empty;
@@ -77,6 +61,21 @@ public class CSharpNamingService : INamingService
 
         // If input is already PascalCase or camelCase, just uppercase the first letter
         return char.ToUpperInvariant(input[0]) + input[1..];
+    }
+
+    private static string ToValidCSharpIdentifier(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return input;
+        // If the first character is not a letter or underscore, prepend underscore
+        if (!char.IsLetter(input[0]) && input[0] != '_')
+            input = "_" + input;
+        // Replace any remaining invalid characters with underscores
+        var chars = input.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray();
+        var identifier = new string(chars);
+        // If identifier is a reserved keyword, append suffix instead of using @
+        if (CSharpReservedKeywords.Contains(identifier))
+            identifier = identifier + ReservedKeywordSuffix;
+        return identifier;
     }
 
     private string ToCamelCase(string input)
