@@ -118,19 +118,7 @@ public class CSharpCodeGenerator : ICodeGenerator
             {
                 return RenderPolyClass(schema);
             }
-            //else if (schema.IsAnyOf())
-            //{
-            //    return RenderAnyOfClass(schema);
-            //}
-            //else if (schema.IsAllOf())
-            //{
-            //    return RenderOneOfClass(schema);
-
-            //}
-            else
-            {
-                templateText = TemplateProviderService.GetClassTemplate();
-            }
+            templateText = TemplateProviderService.GetClassTemplate();
         }
 
         var modifiers = "public";

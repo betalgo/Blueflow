@@ -14,7 +14,7 @@ public static class SchemaHelpers
 
     public static bool IsOneOf(this OpenApiSchema schema)
     {
-        return schema.OneOf.Any();
+        return schema.OneOf.Any() && schema.OneOf.SelectMany(r=>r.Properties).Any();
     }
 
     public static bool IsAllOf(this OpenApiSchema schema)
@@ -205,18 +205,39 @@ public static class SchemaHelpers
         return list;
     }
 
-
+    public static IList<OpenApiSchema> GetListOfPolyVariants(this OpenApiSchema schema)
+    {
+        var variants= schema.OneOf.ToList();
+        variants.AddRange(schema.AnyOf);
+        variants.AddRange(schema.AllOf);
+        foreach (var openApiSchema in variants.ToList())
+        {
+            variants.AddRange(openApiSchema.GetListOfPolyVariants());
+        }
+        return variants;
+    }
     // Checks if a schema (oneOf/anyOf) is only string or string-enum, and can be treated as enum
     public static bool IsPolyStringEnum(this OpenApiSchema schema)
     {
-        // Only applies to oneOf/anyOf
-        var variants = schema.OneOf.Any() ? schema.OneOf : schema.AnyOf;
+        if (!schema.IsPoly())
+        {
+            return false;
+        }
+        var variants = schema.GetListOfPolyVariants();
+
         if (!variants.Any()) return false;
+        
         // All must be string or string-enum
         foreach (var variant in variants)
         {
             if (variant.Type != "string")
+            {
+                if ((variant.Type == null && variant.IsPoly()))
+                {
+                    continue;
+                }
                 return false;
+            }
             // If not enum, must be plain string
             if (!variant.Enum.Any() && variant.Type == "string")
                 continue;
@@ -233,9 +254,10 @@ public static class SchemaHelpers
     // Converts a poly (oneOf/anyOf) schema to enum if it matches IsPolyStringEnum
     public static void ConvertPolyToEnumIfApplicable(this OpenApiSchema schema)
     {
-        if (!schema.IsOneOf() && !schema.IsAnyOf()) return;
+        
         if (!schema.IsPolyStringEnum()) return;
-        var variants = schema.OneOf.Any() ? schema.OneOf : schema.AnyOf;
+        var variants = schema.GetListOfPolyVariants();
+        
         schema.Type = "string";
         schema.Enum = new List<IOpenApiAny>();
         foreach (var variant in variants)
@@ -253,9 +275,11 @@ public static class SchemaHelpers
                 // Just skip
             }
         }
+        schema.Enum = schema.Enum.Distinct().ToList();
 
         schema.OneOf.Clear();
         schema.AnyOf.Clear();
+        schema.AllOf.Clear();
     }
 
 

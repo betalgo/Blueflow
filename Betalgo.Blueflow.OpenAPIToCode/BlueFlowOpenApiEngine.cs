@@ -57,7 +57,7 @@ public class BlueFlowOpenApiEngine
                 "System.Text.Json.Serialization",
                 "System.Collections",
                 "System.Collections.Generic",
-                $"System.Text.Json"
+                "System.Text.Json"
             ]
         };
         var classesDir = _configuration.OutputDirectory;
