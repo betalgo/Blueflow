@@ -124,6 +124,17 @@ public class CSharpCodeGenerator : ICodeGenerator
         var modifiers = "public";
         var properties = schema.Properties.Select(r => RenderProperty(r.Value, null)).ToList();
         var normalizedSummary = DocumentationNormalizerService.Normalize(schema.Description);
+        
+        // Handle inheritance if defined in the schema
+        string baseTypesString = "";
+        if (schema.HasInheritance())
+        {
+            var baseClassName = schema.GetInheritFrom();
+            if (!string.IsNullOrEmpty(baseClassName))
+            {
+                baseTypesString = $" : {baseClassName}";
+            }
+        }
 
         var nestedClasses = schema.GetNestedObjects().Select(Render);
         var constructor = RenderConstructor(schema);
@@ -133,11 +144,10 @@ public class CSharpCodeGenerator : ICodeGenerator
             name = schema.GetBlueflowName(),
             summary = normalizedSummary,
             modifiers,
-            //base_types = baseTypesString,
+            base_types = baseTypesString,
             properties,
             constructor,
             nested_classes = nestedClasses,
-            //parents = classDef.ParentIds,
             ido = schema.GetBlueFlowId()
         });
         return result.Trim();

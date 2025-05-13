@@ -69,6 +69,7 @@ public class BlueFlowOpenApiEngine
     public void Start2()
     {
         GenerateBaseFilesIfNotExistAsync(_configuration.OutputDirectory, _configuration.ProjectName);
+        ProcessPaths();
         ProcessSchema();
         //  ExportOpenAPiDocument();
         CollectClasses();
@@ -204,8 +205,16 @@ public class BlueFlowOpenApiEngine
     }
 
 
+    private void ProcessPaths()
+    {
+        // Generate schemas for path parameters and replace parameters with references
+        SchemaHelpers.GeneratePathParameterSchemas(_openApiDocument);
+    }
+
     private void ProcessSchema()
     {
+      
+        
         foreach (var (name, schema) in _openApiDocument.Components.Schemas)
         {
             schema.SetAsMainComponent();
