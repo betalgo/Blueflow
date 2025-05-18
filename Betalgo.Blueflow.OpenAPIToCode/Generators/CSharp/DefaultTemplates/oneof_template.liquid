@@ -1,0 +1,35 @@
+{% if summary %}
+/// <summary>
+{{ summary }}
+/// </summary>
+{% endif %}
+[JsonConverter(typeof({{ name }}Converter))]
+{{ modifiers }} class {{ name }}{{ base_types }}
+{
+    {% comment %}1. AUTO-GENERATED PROPERTIES --------------------------------{% endcomment %}
+    {% for property in properties %}
+    {{ property }}
+    {% endfor %}
+
+    {% comment %}2. CONSTRUCTORS (one per branch) ----------------------------{% endcomment %}
+    {% for v in one_of_variants %}
+    public {{ name }}({{ v.cs_type }} value)
+    {
+        {% for v2 in one_of_variants %}
+        {{ v2.property_name }} = {% if v2 == v %}value{% else %}null{% endif %};
+        {% endfor %}
+    }
+    {% endfor %}
+
+    {% comment %}3. IMPLICIT CONVERSIONS ------------------------------------{% endcomment %}
+    {% for v in one_of_variants %}
+    public static implicit operator {{ name }}({{ v.cs_type }} value) => new(value);
+    {% endfor %}
+
+    {% comment %}4. NESTED CONVERTER ----------------------------------------{% endcomment %}
+    {{ converter }}
+
+    {% for nested_class in nested_classes %}
+    {{ nested_class }}
+    {% endfor %}
+}

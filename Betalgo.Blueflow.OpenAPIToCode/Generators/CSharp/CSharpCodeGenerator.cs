@@ -84,7 +84,7 @@ public class CSharpCodeGenerator : ICodeGenerator
 
         var typeString = TypeMappingService.MapType(schema);
         var normalizedSummary = DocumentationNormalizerService.Normalize(schema.Description);
-        var template = Template.Parse(templateText);
+        var template = Template.ParseLiquid(templateText);
         string? name, jsonName = null;
         if (schema.IsPolyTypeProperty())
         {
@@ -138,7 +138,7 @@ public class CSharpCodeGenerator : ICodeGenerator
 
         var nestedClasses = schema.GetNestedObjects().Select(Render);
         var constructor = RenderConstructor(schema);
-        var template = Template.Parse(templateText);
+        var template = Template.ParseLiquid(templateText);
         var result = template.Render(new
         {
             name = schema.GetBlueflowName(),
@@ -214,7 +214,7 @@ public class CSharpCodeGenerator : ICodeGenerator
             })
             .ToList();
 
-        var template = Template.Parse(templateText);
+        var template = Template.ParseLiquid(templateText);
         var result = template.Render(new
         {
             summary,
@@ -302,7 +302,7 @@ public class CSharpCodeGenerator : ICodeGenerator
             json_token_type = v.JsonTokenType,
             array_element_token_type = v.ArrayElementTokenType
         }).ToList():null;
-        var converterTemplate = Template.Parse(converterTemplateText);
+        var converterTemplate = Template.ParseLiquid(converterTemplateText);
         var converterResult = converterTemplate.Render(new
         {
             name = className,
@@ -311,7 +311,7 @@ public class CSharpCodeGenerator : ICodeGenerator
             any_basic_type = oneOfVariants.Any(v => v.JsonTokenType != "StartObject")
         });
 
-        var template = Template.Parse(templateText);
+        var template = Template.ParseLiquid(templateText);
         var result = template.Render(new
         {
             name = className,
@@ -386,7 +386,7 @@ public class CSharpCodeGenerator : ICodeGenerator
         // Process the converter template
         var className = NamingService.Convert(schema.GetSelfKey(), NamingPurpose.AnyOfClass);
         var anyOfVariants = schema.AnyOf.Select(variant => GetAnyOfVariantInfo(variant)).ToList();
-        var converterTemplate = Template.Parse(converterTemplateText);
+        var converterTemplate = Template.ParseLiquid(converterTemplateText);
         var converterResult = converterTemplate.Render(new
         {
             name = className,
@@ -402,7 +402,7 @@ public class CSharpCodeGenerator : ICodeGenerator
                 .ToList()
         });
 
-        var template = Template.Parse(templateText);
+        var template = Template.ParseLiquid(templateText);
         var result = template.Render(new
         {
             name = className,
@@ -456,7 +456,7 @@ public class CSharpCodeGenerator : ICodeGenerator
     {
         var usings = fileDefinition.Usings ?? [];
         var ns = fileDefinition.Namespace;
-        var template = Template.Parse(templateText);
+        var template = Template.ParseLiquid(templateText);
         var result = template.Render(new
         {
             usings,
@@ -489,7 +489,7 @@ public class CSharpCodeGenerator : ICodeGenerator
         })
             .ToList();
         var assignments = nonNullableProps.Select(p => $"{NamingService.Convert(p.Value.GetSelfKey(), NamingPurpose.Property)} = {NamingService.Convert(p.Value.GetSelfKey(), NamingPurpose.Parameter)};").ToList();
-        var template = Template.Parse(templateText);
+        var template = Template.ParseLiquid(templateText);
         var result = template.Render(new
         {
             name = schema.GetBlueflowName(),

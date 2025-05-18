@@ -29,7 +29,7 @@ public class CSharpTemplateProviderService : ITemplateProviderService
     /// <inheritdoc />
     public string GetTemplateText(string templateType)
     {
-        var templatePath = Path.Combine(_templatesBasePath, $"{templateType}.sbn");
+        var templatePath = Path.Combine(_templatesBasePath, $"{templateType}.liquid");
         if (!File.Exists(templatePath))
         {
             throw new FileNotFoundException($"Template file not found: {templatePath}");

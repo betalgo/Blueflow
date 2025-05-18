@@ -1,0 +1,53 @@
+{% if summary %}
+/// <summary>
+{{ summary }}
+/// </summary>
+{% endif %}
+[JsonConverter(typeof(Converter))]
+{{ modifiers }} readonly struct {{ name }} : IEquatable<{{ name }}>
+{
+    /// <summary>
+    /// Underlying string value of the {{ name }}.
+    /// </summary>
+    public string Value { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="{{ name }}"/> struct.
+    /// </summary>
+    /// <param name="value">Underlying string value.</param>
+    public {{ name }}(string value)
+    {
+        Value = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    {% for member in members %}
+    /// <summary>
+    /// Literal <c>{{ member.value }}</c>.
+    /// </summary>
+    public static {{ name }} {{ member.name }} { get; } = new("{{ member.value }}");
+    {% endfor %}
+
+    public override string ToString() => Value;
+
+    public bool Equals({{ name }} other) =>
+        string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);
+
+    public override bool Equals(object? obj) =>
+        obj is {{ name }} other && Equals(other);
+
+    public override int GetHashCode() =>
+        StringComparer.OrdinalIgnoreCase.GetHashCode(Value);
+
+    public static bool operator ==({{ name }} left, {{ name }} right) => left.Equals(right);
+    public static bool operator !=({{ name }} left, {{ name }} right) => !(left == right);
+
+    /// <summary>System-Text-Json converter for <see cref="{{ name }}"/>.</summary>
+    public sealed class Converter : JsonConverter<{{ name }}>
+    {
+        public override {{ name }} Read(ref Utf8JsonReader reader, Type t, JsonSerializerOptions o) =>
+            new(reader.GetString()!);
+
+        public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions o) =>
+            writer.WriteStringValue(value.Value);
+    }
+}
