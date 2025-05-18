@@ -14,17 +14,17 @@ public static class SchemaHelpers
 
     public static bool IsOneOf(this OpenApiSchema schema)
     {
-        return schema.OneOf.Any() && schema.OneOf.SelectMany(r=>r.Properties).Any();
+        return schema.OneOf.Any() && !schema.Properties.Any();
     }
 
     public static bool IsAllOf(this OpenApiSchema schema)
     {
-        return schema.AllOf.Any();
+        return schema.AllOf.Any() && !schema.Properties.Any();
     }
 
     public static bool IsAnyOf(this OpenApiSchema schema)
     {
-        return schema.AnyOf.Any() && schema.OneOf.SelectMany(r => r.Properties).Any();
+        return schema.AnyOf.Any() && !schema.Properties.Any();
     }
 
     public static bool HasReference(this OpenApiSchema schema)

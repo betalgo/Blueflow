@@ -1,9 +1,6 @@
 {% if property.summary %}
 /// <summary>
 {{ property.summary }}
-/// </summary>
-{% endif %}
-{% if property.json_name %}
-[JsonPropertyName("{{ property.json_name }}")]
-{% endif %}
+/// </summary>{% endif %}{% if property.json_name %}
+[JsonPropertyName("{{ property.json_name }}")]{% endif %}
 public {{ property.type_string }} {{ property.name }} { get; set; }

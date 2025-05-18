@@ -16,10 +16,10 @@ private sealed class {{ name }}Converter : JsonConverter<{{ name }}>
                 return new ({% if v.use_write_string %}reader.GetString()!{% else %}JsonSerializer.Deserialize<{{ v.cs_type }}>(ref reader, opts)!{% endif %});
 {% endif %}
 {% endfor %}
-}
+        }
 {% endif %}
 
-// 2) For objects, look for the discriminator
+        // 2) For objects, look for the discriminator
         if (reader.TokenType == JsonTokenType.StartObject)
         {
             // Copy the reader so we can hunt for discriminator without consuming the real reader
@@ -85,9 +85,7 @@ private sealed class {{ name }}Converter : JsonConverter<{{ name }}>
                 throw new JsonException();
         }
 {% endif %}
-    }
-
-      public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions opts)
+    }    public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions opts)
     {
 {% for v in one_of_variants %}
         if (value.{{ v.property_name }} is not null)
@@ -103,3 +101,4 @@ private sealed class {{ name }}Converter : JsonConverter<{{ name }}>
         writer.WriteNullValue();
     }
 }
+

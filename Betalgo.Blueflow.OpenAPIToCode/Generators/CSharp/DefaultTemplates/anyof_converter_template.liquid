@@ -58,9 +58,7 @@ private sealed class {{ name }}Converter : JsonConverter<{{ name }}>
             default:
                 throw new JsonException();
         }
-    }
-
-    public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions opts)
+    }    public override void Write(Utf8JsonWriter writer, {{ name }} value, JsonSerializerOptions opts)
     {
 {% for v in any_of_variants %}
         if (value.{{ v.property_name }} is not null)
@@ -76,3 +74,4 @@ private sealed class {{ name }}Converter : JsonConverter<{{ name }}>
         writer.WriteNullValue();
     }
 }
+

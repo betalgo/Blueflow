@@ -1,10 +1,8 @@
 {% if usings %}
-{% for u in usings %}using {{ u }};
-{% endfor %}
-{% endif %}
+{% for u in usings %}
+using {{ u }};{% endfor %}{% endif %}
 {% if ns %}
-namespace {{ ns }};
-{% endif %}
+namespace {{ ns }};{% endif %}
 {% for item in items %}
-{{ item }}
-{% endfor %}
+{{ item }}{% endfor %}
+

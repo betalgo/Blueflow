@@ -10,52 +10,10 @@
   <ItemGroup>
     <None Remove="cleanupcode.exe" />
     <None Remove="Generators\CSharp\Class.sbn" />
-    <None Remove="Generators\CSharp\DefaultTemplates\anyof_converter_template.sbn" />
-    <None Remove="Generators\CSharp\DefaultTemplates\anyof_template.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\OneofStruct.sbn" />
-    <None Remove="Generators\CSharp\DefaultTemplates\oneof_converter_template.sbn" />
     <None Remove="Generators\CSharp\DefaultTemplates\StringEnumJsonConverter.sbn" />
     <None Remove="Generators\CSharp\File.sbn" />
     <None Remove="Generators\CSharp\Property.sbn" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\anyof_converter_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\anyof_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\oneof_converter_read_object_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\oneof_converter_write_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\oneof_converter_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\oneof_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\class_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\required_constructor_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\project_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\property_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\solution_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\enum_as_string_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -68,54 +26,48 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Generators\CSharp\DefaultTemplates\file_template.sbn">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Betalgo.Blueflow.OpenApiExtensions\Betalgo.Blueflow.OpenApiExtensions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Generators\CSharp\DefaultTemplates\anyof_converter_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\anyof_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\class_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\enum_as_string_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\file_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\oneof_converter_read_object_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\oneof_converter_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\oneof_converter_write_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\oneof_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\project_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\property_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\required_constructor_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Generators\CSharp\DefaultTemplates\solution_template.liquid">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

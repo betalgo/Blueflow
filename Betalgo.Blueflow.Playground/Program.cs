@@ -4,13 +4,45 @@ using Betalgo.Blueflow.OpenAPIToCode.Generators.Models;
 
 Console.WriteLine("Betalgo.Blueflow.OpenAPIToCode - Test Client");
 
-
 // Use the simple OpenAPI file from the project directory
 var openApiFile = Path.Combine(Directory.GetCurrentDirectory(), "openapi.yaml");
 Console.WriteLine($"Using OpenAPI file: {openApiFile}");
 
-// Setup output directory
-var outputDir = Path.Combine(AppContext.BaseDirectory, "output");
+// Setup output directory at C:\Repos\{ProjectName}
+string currentDirectory = Directory.GetCurrentDirectory();
+string reposDirectory = null;
+
+// Find the Repos directory (parent of Blueflow)
+string tempPath = currentDirectory;
+while (!string.IsNullOrEmpty(tempPath))
+{
+    string parentDir = Path.GetDirectoryName(tempPath);
+    string dirName = Path.GetFileName(tempPath);
+    
+    if (dirName.Equals("Blueflow", StringComparison.OrdinalIgnoreCase) && 
+        !string.IsNullOrEmpty(parentDir) && 
+        Path.GetFileName(parentDir).Equals("Repos", StringComparison.OrdinalIgnoreCase))
+    {
+        reposDirectory = parentDir; // This is the Repos directory
+        break;
+    }
+    
+    tempPath = parentDir;
+}
+
+if (string.IsNullOrEmpty(reposDirectory))
+{
+    // Fallback to current directory if Repos directory not found
+    reposDirectory = Path.GetDirectoryName(currentDirectory);
+}
+
+// Define the project name consistently throughout the application
+const string projectName = "Betalgo.Ranul.AIModel.OpenAI";
+
+
+// Set output directory to C:\Repos\{ProjectName}
+var outputDir = Path.Combine(reposDirectory, "Betalgo.Ranul.AIModel");
+
 Directory.CreateDirectory(outputDir);
 Console.WriteLine($"Output directory: {outputDir}");
 
@@ -22,17 +54,17 @@ var openApiToCodeParser = new BlueFlowOpenApi(new CSharpCodeGenerator(new CSharp
     ClassNameSuffix = "Model"
 }), new()
 {
-    ProjectName = "TestAPI",
+    ProjectName = projectName,
     OutputDirectory = outputDir,
     ParserConfiguration = new()
     {
         OpenApiDocumentationPath = openApiFile,
-        ProjectName = "TestAPI",
+        ProjectName = projectName,
         GenerateNestedClasses = true,
         OutputDirectory = outputDir
     }
 });
-await CreateSolutionAndProject(outputDir, "TestAPI");
+await CreateSolutionAndProject(outputDir, projectName);
 openApiToCodeParser.Start();
 
 

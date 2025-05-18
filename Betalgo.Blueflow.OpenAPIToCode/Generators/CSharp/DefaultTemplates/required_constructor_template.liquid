@@ -1,16 +1,10 @@
 /// <summary>
 /// Initializes a new instance of the <see cref="{{ name }}" /> class.
-/// </summary>
-{% for param in constructor_parameters %}
-{% if param.summary and param.summary != '' %}
+/// </summary>{% for param in constructor_parameters %}{% if param.summary and param.summary != '' %}
 /// <param name="{{ param.name }}">
 {{ param.summary }}
-/// </param>
-{% endif %}
-{% endfor %}
+/// </param>{% endif %}{% endfor %}
 public {{ name }}({% for param in constructor_parameters %}{{ param.type }} {{ param.name }}{% unless forloop.last %}, {% endunless %}{% endfor %})
-{
-    {% for assignment in assignments %}
-    {{ assignment }}
-    {% endfor %}
+{ {% for assignment in assignments %}
+    {{ assignment }}{% endfor %}
 }

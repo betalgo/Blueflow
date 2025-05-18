@@ -1,8 +1,7 @@
 {% if summary %}
 /// <summary>
 {{ summary }}
-/// </summary>
-{% endif %}
+/// </summary>{% endif %}
 {{ modifiers }} class {{ name }}{{ base_types }}
 {
     /// <summary>
@@ -11,14 +10,13 @@
     public {{ name }}()
     {
     }
-    {% if constructor %}
+{% if constructor %}
     {{ constructor }}
     {% endif %}
-    {% for property in properties %}
+{% for property in properties %}
     {{ property }}
     {% endfor %}
-
-    {% for nested_class in nested_classes %}
+{% for nested_class in nested_classes %}
     {{ nested_class }}
     {% endfor %}
 }
