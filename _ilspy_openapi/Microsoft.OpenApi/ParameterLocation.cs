@@ -1,0 +1,34 @@
+namespace Microsoft.OpenApi;
+
+/// <summary>
+/// The location of the parameter.
+/// </summary>
+public enum ParameterLocation
+{
+	/// <summary>
+	/// Parameters that are appended to the URL.
+	/// </summary>
+	[Display("query")]
+	Query,
+	/// <summary>
+	/// Custom headers that are expected as part of the request.
+	/// </summary>
+	[Display("header")]
+	Header,
+	/// <summary>
+	/// Used together with Path Templating,
+	/// where the parameter value is actually part of the operation's URL
+	/// </summary>
+	[Display("path")]
+	Path,
+	/// <summary>
+	/// Used to pass a specific cookie value to the API.
+	/// </summary>
+	[Display("cookie")]
+	Cookie,
+	/// <summary>
+	/// Parameters that are appended to the URL query string (OpenAPI 3.2+ only).
+	/// </summary>
+	[Display("querystring")]
+	QueryString
+}
