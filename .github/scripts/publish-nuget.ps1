@@ -114,12 +114,24 @@ try {
     if ($response -and $response.versions) {
         $existingVersions = $response.versions
     }
-} catch [System.Net.WebException] {
-    $response = $_.Exception.Response
-    if ($response -and $response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound) {
-        Write-Host "Package not found on feed. Treating as first release."
+} catch {
+    $exception = $_.Exception
+    if ($exception -is [System.Net.WebException]) {
+        $response = $exception.Response
+        if ($response -and $response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound) {
+            Write-Host "Package not found on feed (404). Treating as first release."
+        } else {
+            throw
+        }
+    } elseif ($_.FullyQualifiedErrorId -match "BlobNotFound") {
+         Write-Host "Blob not found (Azure Storage 404). Treating as first release."
     } else {
-        throw
+        # Fallback for other error types that might wrap 404s or behave differently in pwsh on Linux
+        if ($_.ToString() -match "404" -or $_.ToString() -match "NotFound" -or $_.ToString() -match "BlobNotFound") {
+             Write-Host "Package/Blob not found (Generic 404 catch). Treating as first release."
+        } else {
+            throw
+        }
     }
 }
 
