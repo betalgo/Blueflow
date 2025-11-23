@@ -1,3 +1,7 @@
 <Solution>
+  <Folder Name="/Docs/">
+    <File Path=".github/workflows/publish.yml" />
+    <File Path="README.md" />
+  </Folder>
   <Project Path="Blueflow.Chopper/Blueflow.Chopper.csproj" />
 </Solution>

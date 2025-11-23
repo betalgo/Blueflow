@@ -5,6 +5,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- Tool Configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>blueflow-chopper</ToolCommandName>
+    <PackageId>Betalgo.Blueflow.Chopper</PackageId>
+    <Authors>Betalgo</Authors>
+    <Version>1.0.0</Version>
+    <Description>A CLI tool to split monolithic OpenAPI files into smaller fragments.</Description>
   </PropertyGroup>
 
   <ItemGroup>

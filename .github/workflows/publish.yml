@@ -1,0 +1,30 @@
+name: Publish .NET Tool
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'Blueflow.Chopper/**'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Publish to NuGet
+      shell: pwsh
+      env:
+        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: |
+        ./.github/scripts/publish-nuget.ps1 `
+          -ProjectFilePath "Blueflow.Chopper/Blueflow.Chopper.csproj" `
+          -PackageName "Betalgo.Blueflow.Chopper" `
+          -NugetKey "${{ secrets.NUGET_API_KEY }}" `
+          -TagCommit $true

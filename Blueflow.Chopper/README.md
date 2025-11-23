@@ -6,13 +6,29 @@ This tool is particularly useful for AI-assisted development workflows where lar
 
 ## Requirements
 
-- [.NET 10 SDK (Preview)](https://dotnet.microsoft.com/download/dotnet/10.0) or newer.
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or newer.
+
+## Installation
+
+You can install the tool globally via NuGet:
+
+```bash
+dotnet tool install -g Betalgo.Blueflow.Chopper
+```
 
 ## Usage
 
-Run the tool using the .NET CLI. You can provide a local file or a remote URL as the source.
+Run the tool using the CLI command `blueflow-chopper`. You can provide a local file or a remote URL as the source.
 
 ### Basic Example
+
+```bash
+blueflow-chopper --input openapi.yaml --output openapi-split
+```
+
+### Development
+
+To run the tool locally without installing:
 
 ```bash
 dotnet run --project Blueflow.Chopper -- --input openapi.yaml --output openapi-split
@@ -32,12 +48,12 @@ dotnet run --project Blueflow.Chopper -- --input openapi.yaml --output openapi-s
 
 **Split from a URL:**
 ```bash
-dotnet run --project Blueflow.Chopper -- --url https://api.example.com/openapi.yaml --clean
+blueflow-chopper --url https://api.example.com/openapi.yaml --clean
 ```
 
 **Export only Schemas:**
 ```bash
-dotnet run --project Blueflow.Chopper -- -i openapi.yaml -s schemas
+blueflow-chopper -i openapi.yaml -s schemas
 ```
 
 ## Output Structure
