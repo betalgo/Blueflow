@@ -10,21 +10,16 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Publish via Betalgo-Nuget-Publisher
+      uses: Betalgo/NugetPublisher@v1
       with:
-        dotnet-version: 10.0.x
-
-    - name: Publish to NuGet
-      shell: pwsh
-      env:
-        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
-      run: |
-        ./.github/scripts/publish-nuget.ps1 `
-          -ProjectFilePath "Blueflow.Chopper/Blueflow.Chopper.csproj" `
-          -PackageName "Betalgo.Blueflow.Chopper" `
-          -NugetKey "${{ secrets.NUGET_API_KEY }}" `
-          -TagCommit $true
+        project-file: 'Blueflow.Chopper/Blueflow.Chopper.csproj'
+        package-name: 'Betalgo.Blueflow.Chopper'
+        nuget-api-key: ${{ secrets.NUGET_API_KEY }}
+        dotnet-version: '10.0.x'
+        tag-commit: true
