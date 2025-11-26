@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Publish via Betalgo-Nuget-Publisher
-      uses: Betalgo/NugetPublisher@v1
+      uses: betalgo/NugetPublisher@v1.1.0
       with:
         project-file: 'Blueflow.Chopper/Blueflow.Chopper.csproj'
         package-name: 'Betalgo.Blueflow.Chopper'
