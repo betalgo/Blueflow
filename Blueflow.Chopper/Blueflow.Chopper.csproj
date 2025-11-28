@@ -11,7 +11,7 @@
     <ToolCommandName>blueflow-chopper</ToolCommandName>
     <PackageId>Betalgo.Blueflow.Chopper</PackageId>
     <Authors>Betalgo</Authors>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Description>A CLI tool to split monolithic OpenAPI files into smaller fragments.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
     <None Include="BlueflowLogo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
