@@ -12,14 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
     steps:
     - uses: actions/checkout@v4
 
     - name: Publish via Betalgo-Nuget-Publisher
-      uses: betalgo/NugetPublisher@v1.2.0
+      uses: betalgo/NugetPublisher@v1.3.0
       with:
         project-file: 'Blueflow.Chopper/Blueflow.Chopper.csproj'
         package-name: 'Betalgo.Blueflow.Chopper'
         nuget-api-key: ${{ secrets.NUGET_API_KEY }}
         dotnet-version: '10.0.x'
         tag-commit: true
+        publish-to-github-packages: true
