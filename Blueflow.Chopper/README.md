@@ -1,3 +1,5 @@
+<img width="1140" height="240" alt="Betalgo Blueflow Github readme banner" src="https://github.com/user-attachments/assets/1c580ed2-9a6c-4b74-93ee-0efeead70278" />
+
 # Blueflow Chopper
 
 **Blueflow Chopper** is a specialized utility designed to break down monolithic OpenAPI files into smaller, manageable YAML snippets.
