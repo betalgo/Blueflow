@@ -19,6 +19,8 @@ internal sealed class SplitCommand : AsyncCommand<SplitCommand.Settings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
+        var versionCheckTask = CheckForUpdateAsync();
+
         var options = settings.ToOptions();
 
         if (options.SourceFile == null && options.SourceUrl == null)
@@ -43,7 +45,35 @@ internal sealed class SplitCommand : AsyncCommand<SplitCommand.Settings>
 
         RenderSummary(manifest, options);
 
+        await versionCheckTask;
+
         return 0;
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        try
+        {
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            if (version == null)
+            {
+                return;
+            }
+
+            var checker = new VersionChecker("Betalgo.Blueflow.Chopper", version);
+            var latestVersion = await checker.CheckForUpdateAsync();
+
+            if (latestVersion != null)
+            {
+                _console.WriteLine();
+                _console.MarkupLine($"[yellow]A newer version of Blueflow Chopper is available: {latestVersion}[/]");
+                _console.MarkupLine($"Run [green]dotnet tool update -g Betalgo.Blueflow.Chopper[/] to update.");
+            }
+        }
+        catch
+        {
+            // Swallow any errors during version check to not impact main flow
+        }
     }
 
     private async Task<string?> DiscoverInputFileAsync(CancellationToken cancellationToken)
